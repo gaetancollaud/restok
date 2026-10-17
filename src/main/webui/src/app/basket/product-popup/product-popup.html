@@ -1,0 +1,25 @@
+<dialog #dialog class="popup" aria-labelledby="product-popup-title" (close)="closed.emit()" (click)="backdrop($event)">
+  <div class="body">
+    <header class="head">
+      <h2 id="product-popup-title" class="title">{{ item().name }}</h2>
+      <button type="button" class="iconbtn" aria-label="Close" (click)="close()">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </header>
+    <p class="cat" [class.pending]="item().status === 'PENDING'">{{ categoryText() }}</p>
+    <h3 class="section">Buy only at</h3>
+    @if (local()) {
+      <p class="hint">Saving the product… try again in a moment.</p>
+    } @else {
+      <app-shop-select
+        [shops]="shops()"
+        [value]="item().shopId ?? ''"
+        emptyLabel="Any shop"
+        label="Buy only at"
+        (valueChange)="shopChange.emit($event || null)"
+      />
+    }
+  </div>
+</dialog>

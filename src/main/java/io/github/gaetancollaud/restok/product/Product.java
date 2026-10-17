@@ -1,6 +1,7 @@
 package io.github.gaetancollaud.restok.product;
 
 import io.github.gaetancollaud.restok.category.ProductCategory;
+import io.github.gaetancollaud.restok.shop.Shop;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,6 +38,11 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "category_id")
     public ProductCategory category;
+
+    /** The only shop to buy it at; null when it can be bought anywhere. */
+    @ManyToOne
+    @JoinColumn(name = "shop_id")
+    public Shop shop;
 
     @NonNull
     @Enumerated(EnumType.STRING)

@@ -5,6 +5,11 @@
   [class.has-top]="hasTop()"
   [attr.aria-label]="ariaLabel()"
   (click)="tap()"
+  (pointerdown)="pointerDown($event)"
+  (pointerup)="pointerEnd()"
+  (pointercancel)="pointerEnd()"
+  (pointerleave)="pointerEnd()"
+  (contextmenu)="contextMenu($event)"
 >
   @if (hasTop()) {
     <!-- Already named in the accessible label -->

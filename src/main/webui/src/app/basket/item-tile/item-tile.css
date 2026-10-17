@@ -25,6 +25,10 @@
   -webkit-tap-highlight-color: transparent;
   transition: transform 80ms ease-out;
   touch-action: manipulation;
+  /* A long press opens the details, not the text selection or iOS callout */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .tile:active {

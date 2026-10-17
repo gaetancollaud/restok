@@ -23,6 +23,9 @@ query Grocery {
       id
       name
     }
+    shop {
+      id
+    }
   }
 }
 
@@ -37,6 +40,15 @@ mutation SetProductBought($id: String!, $bought: Boolean!) {
     id
     bought
     boughtAt
+  }
+}
+
+mutation SetProductShop($id: String!, $shopId: String) {
+  setProductShop(id: $id, shopId: $shopId) {
+    id
+    shop {
+      id
+    }
   }
 }
 

@@ -11,6 +11,7 @@
   (editShops)="panel.set('shops')"
   (boughtChange)="setBought($event)"
   (added)="add($event)"
+  (shopChange)="setProductShop($event)"
 />
 <app-shop-editor
   [hidden]="panel() !== 'shops'"

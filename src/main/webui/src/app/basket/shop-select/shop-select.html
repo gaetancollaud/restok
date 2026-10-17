@@ -1,4 +1,7 @@
 <select class="select" [attr.aria-label]="label()" (change)="value.set($any($event.target).value)">
+  @if (emptyLabel()) {
+    <option value="" [selected]="!value()">{{ emptyLabel() }}</option>
+  }
   @for (shop of shops(); track shop.id) {
     <option [value]="shop.id" [selected]="shop.id === value()">{{ shop.name }}</option>
   }

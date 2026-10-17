@@ -2,6 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { ClassificationStatus } from '../basket';
 
 const DOUBLE_TAP_MS = 400;
+const LONG_PRESS_MS = 500;
 
 /** A square, tappable grocery item. Place it inside an ItemGrid. */
 @Component({
@@ -22,9 +23,16 @@ export class ItemTile {
   readonly category = input<string>();
   /** To-buy tiles emit on a second tap within DOUBLE_TAP_MS, so a stray tap doesn't buy; Bought tiles on every tap. */
   readonly press = output<void>();
+  /** A long press, right click or menu key: open the product details. Never also emits press. */
+  readonly longPress = output<void>();
 
   // ponytail: own double-tap instead of dblclick, which touch browsers don't fire reliably
   private lastTap = 0;
+  // ponytail: own long press, iOS Safari fires no contextmenu on touch
+  private holdTimer?: ReturnType<typeof setTimeout>;
+  private holding = false;
+  /** The click that ends a long press is not a tap. */
+  private swallowClick = false;
 
   protected readonly bought = computed(() => this.variant() === 'bought');
   /** The dot is never the only cue: the label names the state too. */
@@ -63,7 +71,37 @@ export class ItemTile {
         return 'No category';
     }
   });
+  protected pointerDown(e: PointerEvent) {
+    this.swallowClick = false;
+    if (e.button !== 0) return; // right click goes through contextmenu
+    this.holding = true;
+    this.holdTimer = setTimeout(() => this.openDetails(), LONG_PRESS_MS);
+  }
+
+  /** Released, cancelled (the browser started scrolling) or left the tile. */
+  protected pointerEnd() {
+    this.holding = false;
+    clearTimeout(this.holdTimer);
+  }
+
+  protected contextMenu(e: Event) {
+    e.preventDefault();
+    this.openDetails();
+  }
+
+  /** Android also fires contextmenu on a long press, so this may run twice; opening twice is harmless. */
+  private openDetails() {
+    clearTimeout(this.holdTimer);
+    if (this.holding) this.swallowClick = true;
+    this.lastTap = 0;
+    this.longPress.emit();
+  }
+
   protected tap() {
+    if (this.swallowClick) {
+      this.swallowClick = false;
+      return;
+    }
     const now = Date.now();
     if (this.bought() || now - this.lastTap < DOUBLE_TAP_MS) {
       this.lastTap = 0;

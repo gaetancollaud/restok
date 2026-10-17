@@ -12,4 +12,6 @@ export class ShopSelect {
   /** Selected shop id; bind with [(value)]. */
   readonly value = model('');
   readonly label = input('Shop');
+  /** When set, a first option with this text and the value ''. */
+  readonly emptyLabel = input<string>();
 }

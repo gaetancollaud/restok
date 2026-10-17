@@ -1,0 +1,53 @@
+.popup {
+  box-sizing: border-box;
+  width: min(420px, calc(100vw - 2 * var(--space-4)));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+.popup::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.body {
+  padding: var(--space-4);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding-top: var(--space-3);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.cat {
+  margin: var(--space-1) 0 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+.cat.pending {
+  font-style: italic;
+}
+
+.hint {
+  margin: 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}

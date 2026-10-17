@@ -171,4 +171,72 @@ describe('GroceryScreen', () => {
     await fixture.whenStable();
     expect(heading(fixture.nativeElement)).toBe('All done');
   });
+
+  describe('shop restriction', () => {
+    const restricted: Item[] = [
+      { id: '1', name: 'Tomatoes', aisle: 'Produce' },
+      { id: '2', name: 'Parmesan', shopId: 'coop' },
+    ];
+
+    async function renderRestricted() {
+      const fixture = TestBed.createComponent(GroceryScreen);
+      fixture.componentRef.setInput('shops', shops);
+      fixture.componentRef.setInput('items', restricted);
+      await fixture.whenStable();
+      return { fixture, el: fixture.nativeElement as HTMLElement };
+    }
+    const hiddenText = (el: HTMLElement) => el.querySelector('.hidden-count')?.textContent?.trim();
+    const pickShop = async (fixture: { whenStable: () => Promise<unknown> }, select: HTMLSelectElement, id: string) => {
+      select.value = id;
+      select.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+    };
+
+    it('hides items for another shop and shows them at their shop', async () => {
+      const { fixture, el } = await renderRestricted();
+      expect(tiles(el, 'To buy')).toEqual(['Tomatoes']);
+      expect(hiddenText(el)).toBe('1 more for other shops');
+
+      await pickShop(fixture, el.querySelector('select')!, 'coop');
+      expect(tiles(el, 'To buy')).toEqual(['Tomatoes', 'Parmesan']);
+      expect(hiddenText(el)).toBeUndefined();
+    });
+
+    it('shows every item under All shops, which is first but not the default', async () => {
+      const { fixture, el } = await renderRestricted();
+      const select = el.querySelector('select')!;
+      expect(select.options[0].text.trim()).toBe('All shops');
+      expect(select.value).toBe('migros');
+
+      await pickShop(fixture, select, '');
+      expect(tiles(el, 'To buy')).toEqual(['Parmesan', 'Tomatoes']);
+      expect(hiddenText(el)).toBeUndefined();
+
+      await pickShop(fixture, select, 'migros');
+      expect(tiles(el, 'To buy')).toEqual(['Tomatoes']);
+      expect(hiddenText(el)).toBe('1 more for other shops');
+    });
+
+    it('restricts an item from the long-press popup', async () => {
+      const { fixture, el } = await renderRestricted();
+      const changes: unknown[] = [];
+      fixture.componentInstance.shopChange.subscribe((c) => changes.push(c));
+
+      el.querySelector('[aria-label="Tomatoes, tap twice to mark as bought"]')!
+        .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+      await fixture.whenStable();
+      const popup = el.querySelector('app-product-popup')!;
+      expect(popup.querySelector('h2')!.textContent).toBe('Tomatoes');
+      expect(popup.querySelector('select')!.value).toBe('');
+
+      await pickShop(fixture, popup.querySelector('select')!, 'coop');
+      expect(changes).toEqual([{ id: '1', shopId: 'coop' }]);
+      expect(tiles(el, 'To buy')).toEqual([]);
+      expect(hiddenText(el)).toBe('2 more for other shops');
+
+      popup.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click();
+      await fixture.whenStable();
+      expect(el.querySelector('app-product-popup')).toBeNull();
+    });
+  });
 });

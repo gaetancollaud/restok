@@ -1,8 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, signal } from '@angular/core';
 import { AddBar } from '../add-bar/add-bar';
-import { boughtList, findShop, Item, orderFor, Shop } from '../basket';
+import { ALL_SHOPS, boughtList, findShop, hiddenFor, Item, orderFor, Shop } from '../basket';
 import { ItemGrid } from '../item-grid/item-grid';
 import { ItemTile } from '../item-tile/item-tile';
+import { ProductPopup } from '../product-popup/product-popup';
 import { ShopSelect } from '../shop-select/shop-select';
 
 /**
@@ -12,14 +13,14 @@ import { ShopSelect } from '../shop-select/shop-select';
  */
 @Component({
   selector: 'app-grocery-screen',
-  imports: [ShopSelect, ItemGrid, ItemTile, AddBar],
+  imports: [ShopSelect, ItemGrid, ItemTile, AddBar, ProductPopup],
   templateUrl: './grocery-screen.html',
   styleUrl: './grocery-screen.css',
 })
 export class GroceryScreen {
   readonly shops = input.required<Shop[]>();
   readonly items = input.required<Item[]>();
-  /** Selected shop id; the first shop when unset or gone. */
+  /** Selected shop id, or ALL_SHOPS; the first shop when unset or gone. */
   readonly shopId = model('');
   /**
    * Picks a category (one of the aisles) for a new item, or null. New items show PENDING until it settles;
@@ -33,8 +34,14 @@ export class GroceryScreen {
   readonly boughtChange = output<{ id: string; bought: boolean }>();
   /** A new item name; a name already in the list is revived instead. */
   readonly added = output<string>();
+  /** An item restricted to a shop, or to any shop (null). */
+  readonly shopChange = output<{ id: string; shopId: string | null }>();
 
-  protected readonly shop = computed(() => findShop(this.shops(), this.shopId()));
+  /** Undefined for All shops. */
+  protected readonly shop = computed(() =>
+    this.shopId() === ALL_SHOPS ? undefined : findShop(this.shops(), this.shopId()),
+  );
+  protected readonly ALL_SHOPS = ALL_SHOPS;
   // Local copy, reset whenever the parent passes new items
   private readonly state = linkedSignal(() => this.items());
 
@@ -42,6 +49,16 @@ export class GroceryScreen {
     orderFor(this.state(), this.shop()),
   );
   protected readonly bought = computed(() => boughtList(this.state()));
+  protected readonly hidden = computed(() => hiddenFor(this.state(), this.shop()));
+
+  /** The item shown in the popup, by id so it follows the local state. */
+  protected readonly selectedId = signal<string | null>(null);
+  protected readonly selected = computed(() => this.state().find((x) => x.id === this.selectedId()));
+
+  protected setShop(id: string, shopId: string | null): void {
+    this.state.update((items) => items.map((x) => (x.id === id ? { ...x, shopId: shopId ?? undefined } : x)));
+    this.shopChange.emit({ id, shopId });
+  }
 
   protected setBought(id: string, bought: boolean): void {
     this.state.update((items) =>

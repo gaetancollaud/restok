@@ -9,6 +9,7 @@ type Mutation {
   renameCategory(id: String!, name: String!): ProductCategory!
   setProductBought(bought: Boolean!, id: String!): Product!
   setProductCategory(categoryId: String, id: String!): Product!
+  setProductShop(id: String!, shopId: String): Product!
   setShopCategoryOrder(categoryIds: [String!]!, shopId: String!): Shop!
   updateShop(id: String!, latitude: Float, longitude: Float, name: String!): Shop!
 }
@@ -21,6 +22,7 @@ type Product {
   classification: ProductClassification!
   id: String!
   name: String!
+  shop: Shop
 }
 
 type ProductCategory {

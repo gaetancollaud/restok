@@ -6,6 +6,7 @@ import {
   AddShopDocument,
   GroceryDocument,
   SetProductBoughtDocument,
+  SetProductShopDocument,
   SetShopCategoryOrderDocument,
   UpdateShopDocument,
 } from '../graphql/generated';
@@ -30,6 +31,7 @@ describe('Grocery', () => {
     boughtAt: null,
     classification,
     category: cat ? category(cat) : null,
+    shop: null as unknown,
   });
   const coop = {
     __typename: 'Shop',
@@ -76,6 +78,34 @@ describe('Grocery', () => {
     await fixture.whenStable();
     expect(toBuy(el)).toEqual(['baguette']);
     expect(el.querySelector('[aria-label="Add apple again, Fruits"]')).not.toBeNull();
+  });
+
+  it('restricts a product to a shop from its popup, and back to any shop', async () => {
+    const lidl = { ...coop, id: 'lidl', name: 'Lidl', categoryOrder: [] };
+    const fixture = TestBed.createComponent(Grocery);
+    fixture.detectChanges();
+    controller.expectOne(GroceryDocument).flush({ data: { shops: [coop, lidl], categories, products: [apple, baguette] } });
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!
+      .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+    await fixture.whenStable();
+    const select = el.querySelector<HTMLSelectElement>('app-product-popup select')!;
+    const pick = async (value: string, shop: unknown) => {
+      select.value = value;
+      select.dispatchEvent(new Event('change'));
+      const op = controller.expectOne(SetProductShopDocument);
+      expect(op.operation.variables).toEqual({ id: '1', shopId: value || null });
+      op.flush({ data: { setProductShop: { __typename: 'Product', id: '1', shop } } });
+      await fixture.whenStable();
+    };
+
+    await pick('lidl', { __typename: 'Shop', id: 'lidl' });
+    expect(toBuy(el)).toEqual(['baguette']);
+    expect(el.querySelector('.hidden-count')!.textContent!.trim()).toBe('1 more for other shops');
+
+    await pick('', null);
+    expect(toBuy(el)).toEqual(['baguette', 'apple']);
   });
 
   it('adds a new product and refetches', async () => {

@@ -2,6 +2,7 @@ package io.github.gaetancollaud.restok.shop;
 
 import io.agroal.api.AgroalDataSource;
 import io.github.gaetancollaud.restok.TestDb;
+import io.github.gaetancollaud.restok.product.ProductGraphQLApiTest;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,6 +140,16 @@ public class ShopGraphQLApiTest {
         post(DELETE, Map.of("id", id)).body("errors", nullValue()).body("data.deleteShop", is(id));
         post(LIST).body("data.shops", empty());
         post("{ categories { name } }").body("data.categories", hasSize(TestDb.DEFAULT_CATEGORIES.size()));
+    }
+
+    @Test
+    void deleteFreesRestrictedProducts() {
+        String lidl = addShop("Lidl");
+        String parmesan = ProductGraphQLApiTest.addProduct("parmesan");
+        ProductGraphQLApiTest.setShop(parmesan, lidl);
+        post(DELETE, Map.of("id", lidl)).body("errors", nullValue());
+        post("{ products { name shop { name } } }").body("data.products.name", contains("parmesan"))
+                .body("data.products[0].shop", nullValue());
     }
 
     @Test

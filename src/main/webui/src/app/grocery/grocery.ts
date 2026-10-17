@@ -12,6 +12,7 @@ import {
   GroceryGQL,
   GroceryQuery,
   SetProductBoughtGQL,
+  SetProductShopGQL,
   SetShopCategoryOrderGQL,
   UpdateShopGQL,
 } from '../graphql/generated';
@@ -26,6 +27,7 @@ import {
 export class Grocery {
   private readonly addGql = inject(AddProductGQL);
   private readonly boughtGql = inject(SetProductBoughtGQL);
+  private readonly productShopGql = inject(SetProductShopGQL);
   private readonly addShopGql = inject(AddShopGQL);
   private readonly updateShopGql = inject(UpdateShopGQL);
   private readonly deleteShopGql = inject(DeleteShopGQL);
@@ -53,6 +55,7 @@ export class Grocery {
       status: p.classification,
       bought: p.bought,
       boughtAt: p.boughtAt ? Date.parse(p.boughtAt) : undefined,
+      shopId: p.shop?.id,
     })),
   );
   protected readonly error = signal<string | null>(null);
@@ -76,6 +79,10 @@ export class Grocery {
   protected setBought(change: { id: string; bought: boolean }): void {
     // The response updates the cached product, which re-renders the screen
     this.run(this.boughtGql.mutate({ variables: change }));
+  }
+
+  protected setProductShop(change: { id: string; shopId: string | null }): void {
+    this.run(this.productShopGql.mutate({ variables: change }));
   }
 
   protected add(name: string): void {

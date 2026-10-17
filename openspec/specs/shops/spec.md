@@ -55,11 +55,15 @@ The GraphQL API SHALL provide an `updateShop(id, name, latitude, longitude)` mut
 - **THEN** the response contains an error
 
 ### Requirement: Delete a shop
-The GraphQL API SHALL provide a `deleteShop(id)` mutation that removes the shop and its category order and returns the deleted id. Categories and products SHALL NOT be affected. An unknown id SHALL be rejected with a GraphQL error.
+The GraphQL API SHALL provide a `deleteShop(id)` mutation that removes the shop and its category order and returns the deleted id. Categories SHALL NOT be affected. Products restricted to that shop SHALL keep existing and become buyable at any shop. An unknown id SHALL be rejected with a GraphQL error.
 
 #### Scenario: Delete
 - **WHEN** a client deletes a shop that has a category order
 - **THEN** the shop no longer appears in `shops` and all categories still exist
+
+#### Scenario: Restricted products survive
+- **WHEN** "parmesan" is restricted to "Lidl" and a client deletes "Lidl"
+- **THEN** `products` still returns "parmesan" with a null shop
 
 ### Requirement: Set a shop's category order
 The GraphQL API SHALL provide a `setShopCategoryOrder(shopId, categoryIds)` mutation that replaces the shop's whole category order with the given list and returns the shop. The list MAY be partial. Duplicate ids, unknown category ids, or an unknown shop SHALL be rejected with a GraphQL error and the previous order kept.

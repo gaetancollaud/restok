@@ -25,13 +25,14 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 @QuarkusTest
-class ProductGraphQLApiTest {
+public class ProductGraphQLApiTest {
 
-    static final String FIELDS = "{ id name bought boughtAt classification category { name } }";
+    static final String FIELDS = "{ id name bought boughtAt classification category { name } shop { name } }";
     static final String LIST = "query($shopId: String) { products(shopId: $shopId) " + FIELDS + " }";
     static final String ADD = "mutation($name: String!) { addProduct(name: $name) " + FIELDS + " }";
     static final String SET_BOUGHT = "mutation($id: String!, $b: Boolean!) { setProductBought(id: $id, bought: $b) " + FIELDS + " }";
     static final String SET_CATEGORY = "mutation($id: String!, $c: String) { setProductCategory(id: $id, categoryId: $c) " + FIELDS + " }";
+    static final String SET_SHOP = "mutation($id: String!, $s: String) { setProductShop(id: $id, shopId: $s) " + FIELDS + " }";
     static final String DELETE = "mutation($id: String!) { deleteProduct(id: $id) }";
 
     @Inject
@@ -51,6 +52,13 @@ class ProductGraphQLApiTest {
         vars.put("id", productId);
         vars.put("c", categoryName == null ? null : categoryId(categoryName));
         post(SET_CATEGORY, vars).body("errors", nullValue());
+    }
+
+    public static void setShop(String productId, String shopId) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("id", productId);
+        vars.put("s", shopId);
+        post(SET_SHOP, vars).body("errors", nullValue());
     }
 
     static Map<String, Object> shop(String shopId) {
@@ -79,6 +87,7 @@ class ProductGraphQLApiTest {
                 .body("data.addProduct.name", is("tomato"))
                 .body("data.addProduct.bought", is(false))
                 .body("data.addProduct.category", nullValue())
+                .body("data.addProduct.shop", nullValue())
                 .body("data.addProduct.classification", is("PENDING"));
     }
 
@@ -133,11 +142,32 @@ class ProductGraphQLApiTest {
     }
 
     @Test
+    void shopCanBeSetAndCleared() {
+        String lidl = addShop("Lidl");
+        String parmesan = addProduct("parmesan");
+        addProduct("apple");
+        post(SET_SHOP, Map.of("id", parmesan, "s", lidl)).body("data.setProductShop.shop.name", is("Lidl"));
+        post(LIST, shop(null)).body("data.products.find { it.name == 'parmesan' }.shop.name", is("Lidl"))
+                .body("data.products.find { it.name == 'apple' }.shop", nullValue());
+        setShop(parmesan, null);
+        post(LIST, shop(null)).body("data.products.find { it.name == 'parmesan' }.shop", nullValue());
+    }
+
+    @Test
+    void unknownShopKeepsPreviousShop() {
+        String parmesan = addProduct("parmesan");
+        setShop(parmesan, addShop("Lidl"));
+        post(SET_SHOP, Map.of("id", parmesan, "s", UUID.randomUUID().toString())).body("errors[0].message", is("shop not found"));
+        post(LIST, shop(null)).body("data.products[0].shop.name", is("Lidl"));
+    }
+
+    @Test
     void unknownIdsAreRejected() {
         String unknown = UUID.randomUUID().toString();
         post(SET_BOUGHT, Map.of("id", unknown, "b", true)).body("errors[0].message", is("product not found"));
         post(SET_CATEGORY, Map.of("id", unknown, "c", categoryId("Fruits"))).body("errors[0].message", is("product not found"));
         post(SET_CATEGORY, Map.of("id", addProduct("apple"), "c", unknown)).body("errors[0].message", is("category not found"));
+        post(SET_SHOP, Map.of("id", unknown, "s", addShop("Lidl"))).body("errors[0].message", is("product not found"));
         post(DELETE, Map.of("id", unknown)).body("errors[0].message", is("product not found"));
     }
 

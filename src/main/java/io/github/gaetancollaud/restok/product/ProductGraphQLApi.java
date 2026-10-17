@@ -85,6 +85,18 @@ public class ProductGraphQLApi {
         return product;
     }
 
+    @Mutation("setProductShop")
+    @Transactional
+    public @NonNull Product setProductShop(@NonNull UUID id, UUID shopId) throws GraphQLException {
+        Product product = find(id);
+        if (shopId == null) {
+            product.shop = null;
+            return product;
+        }
+        product.shop = shopRepository.findByIdOptional(shopId).orElseThrow(() -> new GraphQLException("shop not found"));
+        return product;
+    }
+
     @Mutation
     @Transactional
     public @NonNull UUID deleteProduct(@NonNull UUID id) throws GraphQLException {
