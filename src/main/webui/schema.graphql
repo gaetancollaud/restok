@@ -2,7 +2,7 @@
 type Mutation {
   addCategory(name: String!): ProductCategory!
   addProduct(name: String!): Product!
-  addShop(latitude: Float!, longitude: Float!, name: String!): Shop!
+  addShop(latitude: Float, longitude: Float, name: String!): Shop!
   deleteCategory(id: String!): String!
   deleteProduct(id: String!): String!
   deleteShop(id: String!): String!
@@ -10,7 +10,7 @@ type Mutation {
   setProductBought(bought: Boolean!, id: String!): Product!
   setProductCategory(categoryId: String, id: String!): Product!
   setShopCategoryOrder(categoryIds: [String!]!, shopId: String!): Shop!
-  updateShop(id: String!, latitude: Float!, longitude: Float!, name: String!): Shop!
+  updateShop(id: String!, latitude: Float, longitude: Float, name: String!): Shop!
 }
 
 type Product {
@@ -38,8 +38,8 @@ type Query {
 type Shop {
   categoryOrder: [ProductCategory!]!
   id: String!
-  latitude: Float!
-  longitude: Float!
+  latitude: Float
+  longitude: Float
   name: String!
 }
 

@@ -5,11 +5,11 @@
     type="text"
     enterkeyhint="done"
     autocomplete="off"
-    aria-label="New item"
+    [attr.aria-label]="label()"
     [placeholder]="placeholder()"
     (input)="text.set($any($event.target).value)"
   />
-  <button class="add" type="submit" aria-label="Add item" [disabled]="!text().trim()">
+  <button class="add" type="submit" [attr.aria-label]="buttonLabel()" [disabled]="!text().trim()">
     <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
       <path d="M13 4v18M4 13h18" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" />
     </svg>

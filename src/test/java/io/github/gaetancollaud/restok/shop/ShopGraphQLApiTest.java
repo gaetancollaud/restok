@@ -26,11 +26,11 @@ public class ShopGraphQLApiTest {
 
     static final String LIST = "{ shops { id name latitude longitude categoryOrder { name } } }";
     static final String ADD = """
-            mutation($name: String!, $lat: Float!, $lon: Float!) {
+            mutation($name: String!, $lat: Float, $lon: Float) {
               addShop(name: $name, latitude: $lat, longitude: $lon) { id name latitude longitude categoryOrder { name } }
             }""";
     static final String UPDATE = """
-            mutation($id: String!, $name: String!, $lat: Float!, $lon: Float!) {
+            mutation($id: String!, $name: String!, $lat: Float, $lon: Float) {
               updateShop(id: $id, name: $name, latitude: $lat, longitude: $lon) { id name latitude longitude }
             }""";
     static final String DELETE = "mutation($id: String!) { deleteShop(id: $id) }";
@@ -90,7 +90,17 @@ public class ShopGraphQLApiTest {
     }
 
     @Test
+    void addWithoutLocation() {
+        post(ADD, Map.of("name", "Lidl"))
+                .body("errors", nullValue())
+                .body("data.addShop.name", is("Lidl"))
+                .body("data.addShop.latitude", nullValue())
+                .body("data.addShop.longitude", nullValue());
+    }
+
+    @Test
     void invalidInputIsRejected() {
+        post(ADD, Map.of("name", "Coop", "lat", 46.52)).body("errors[0].message", is("latitude and longitude must be given together"));
         post(ADD, Map.of("name", "  ", "lat", 0, "lon", 0)).body("errors[0].message", is("name must not be blank"));
         post(ADD, Map.of("name", "Coop", "lat", 91, "lon", 0)).body("errors[0].message", is("latitude must be between -90 and 90"));
         post(ADD, Map.of("name", "Coop", "lat", 0, "lon", -181)).body("errors[0].message", is("longitude must be between -180 and 180"));

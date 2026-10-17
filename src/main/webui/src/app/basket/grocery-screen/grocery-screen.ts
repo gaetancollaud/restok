@@ -1,13 +1,14 @@
-import { Component, computed, input, linkedSignal, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { AddBar } from '../add-bar/add-bar';
-import { boughtList, Item, orderFor, Shop } from '../basket';
+import { boughtList, findShop, Item, orderFor, Shop } from '../basket';
 import { ItemGrid } from '../item-grid/item-grid';
 import { ItemTile } from '../item-tile/item-tile';
 import { ShopSelect } from '../shop-select/shop-select';
 
 /**
  * The whole list on one screen: shop dropdown, To-buy grid, Bought grid, add bar.
- * Holds the selected shop and bought state itself; the outputs let a parent persist the changes.
+ * Holds the bought state itself; the outputs let a parent persist the changes. Bind [(shopId)] to share the
+ * selected shop.
  */
 @Component({
   selector: 'app-grocery-screen',
@@ -18,39 +19,29 @@ import { ShopSelect } from '../shop-select/shop-select';
 export class GroceryScreen {
   readonly shops = input.required<Shop[]>();
   readonly items = input.required<Item[]>();
-  readonly initialShop = input<string>();
+  /** Selected shop id; the first shop when unset or gone. */
+  readonly shopId = model('');
   /**
    * Picks a category (one of the aisles) for a new item, or null. New items show PENDING until it settles;
    * without it they start UNCLASSIFIED.
    */
   readonly classify = input<(name: string) => Promise<string | null>>();
 
-  readonly shopChange = output<string>();
+  /** The edit button beside the dropdown: open the Shops panel. */
+  readonly editShops = output<void>();
   /** An item marked bought (true) or put back on the list (false). */
   readonly boughtChange = output<{ id: string; bought: boolean }>();
   /** A new item name; a name already in the list is revived instead. */
   readonly added = output<string>();
 
-  // Kept across refreshed shop lists while the selected shop still exists
-  protected readonly shopId = linkedSignal<Shop[], string>({
-    source: () => this.shops(),
-    computation: (shops, previous) =>
-      previous && shops.some((s) => s.id === previous.value)
-        ? previous.value
-        : (this.initialShop() ?? shops[0]?.id ?? ''),
-  });
+  protected readonly shop = computed(() => findShop(this.shops(), this.shopId()));
   // Local copy, reset whenever the parent passes new items
   private readonly state = linkedSignal(() => this.items());
 
   protected readonly toBuy = computed(() =>
-    orderFor(this.state(), this.shops().find((s) => s.id === this.shopId())),
+    orderFor(this.state(), this.shop()),
   );
   protected readonly bought = computed(() => boughtList(this.state()));
-
-  protected selectShop(id: string): void {
-    this.shopId.set(id);
-    this.shopChange.emit(id);
-  }
 
   protected setBought(id: string, bought: boolean): void {
     this.state.update((items) =>

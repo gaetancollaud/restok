@@ -2,10 +2,16 @@ query Grocery {
   shops {
     id
     name
+    latitude
+    longitude
     categoryOrder {
       id
       name
     }
+  }
+  categories {
+    id
+    name
   }
   products {
     id
@@ -31,5 +37,33 @@ mutation SetProductBought($id: String!, $bought: Boolean!) {
     id
     bought
     boughtAt
+  }
+}
+
+mutation AddShop($name: String!) {
+  addShop(name: $name) {
+    id
+  }
+}
+
+mutation UpdateShop($id: String!, $name: String!, $latitude: Float, $longitude: Float) {
+  updateShop(id: $id, name: $name, latitude: $latitude, longitude: $longitude) {
+    id
+  }
+}
+
+mutation DeleteShop($id: String!) {
+  deleteShop(id: $id)
+}
+
+mutation SetShopCategoryOrder($shopId: String!, $categoryIds: [String!]!) {
+  setShopCategoryOrder(shopId: $shopId, categoryIds: $categoryIds) {
+    id
+  }
+}
+
+mutation AddCategory($name: String!) {
+  addCategory(name: $name) {
+    id
   }
 }

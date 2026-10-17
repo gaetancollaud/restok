@@ -13,6 +13,8 @@
   --status-classified: #15803d;
   --status-unclassified: #b91c1c;
   --line: #ead8c6;
+  --danger: var(--status-unclassified);
+  --on-danger: #ffffff;
 
   --font-sans: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
 
@@ -47,6 +49,7 @@
     --status-classified: #4ade80;
     --status-unclassified: #ff8a8a;
     --line: #3a2d24;
+    --on-danger: #1b1410;
   }
 }
 
@@ -55,4 +58,79 @@ body {
   background: var(--surface);
   color: var(--ink);
   font-family: var(--font-sans);
+}
+
+/* Panel shell shared by the list and the Shops panel: sticky header and footer, scrolling main */
+.header,
+.footer {
+  position: sticky;
+  z-index: 1;
+  background: var(--surface);
+  padding: var(--space-4);
+}
+
+.header {
+  top: 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.header > :not(.iconbtn) {
+  flex: 1;
+  min-width: 0;
+}
+
+.footer {
+  bottom: 0;
+  border-top: 1px solid var(--line);
+}
+
+.main {
+  flex: 1;
+  padding: var(--space-4);
+}
+
+.section {
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.section:first-child {
+  margin-top: 0;
+}
+
+.section.bought {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+/* Square icon button in a header: edit shops, back */
+.iconbtn {
+  flex: none;
+  box-sizing: border-box;
+  width: var(--size-touch);
+  height: var(--size-touch);
+  padding: 0;
+  border: 2px solid var(--ink-muted);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.iconbtn:active {
+  background: var(--surface-sunken);
+}
+
+.iconbtn:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
 }

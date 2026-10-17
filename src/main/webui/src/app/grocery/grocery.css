@@ -10,3 +10,8 @@
   font-size: 15px;
   line-height: 20px;
 }
+
+/* The panels' hosts set display: flex, which would beat the hidden attribute */
+[hidden] {
+  display: none !important;
+}

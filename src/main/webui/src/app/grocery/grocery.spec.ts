@@ -1,6 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { ApolloTestingController, ApolloTestingModule } from 'apollo-angular/testing';
-import { AddProductDocument, GroceryDocument, SetProductBoughtDocument } from '../graphql/generated';
+import {
+  AddCategoryDocument,
+  AddProductDocument,
+  AddShopDocument,
+  GroceryDocument,
+  SetProductBoughtDocument,
+  SetShopCategoryOrderDocument,
+  UpdateShopDocument,
+} from '../graphql/generated';
 import { Grocery } from './grocery';
 
 describe('Grocery', () => {
@@ -27,15 +35,18 @@ describe('Grocery', () => {
     __typename: 'Shop',
     id: 'coop',
     name: 'Coop',
+    latitude: 46.5,
+    longitude: 6.6,
     categoryOrder: [category('Pain'), category('Fruits')],
   };
+  const categories = [category('Pain'), category('Fruits')];
   const apple = product('1', 'apple', 'Fruits');
   const baguette = product('2', 'baguette', 'Pain');
 
   async function render(products: unknown[] = [apple, baguette]) {
     const fixture = TestBed.createComponent(Grocery);
     fixture.detectChanges();
-    controller.expectOne(GroceryDocument).flush({ data: { shops: [coop], products } });
+    controller.expectOne(GroceryDocument).flush({ data: { shops: [coop], categories, products } });
     await fixture.whenStable();
     return fixture;
   }
@@ -78,7 +89,7 @@ describe('Grocery', () => {
     expect(op.operation.variables).toEqual({ name: 'pomme' });
     op.flush({ data: { addProduct: { __typename: 'Product', id: '3' } } });
     controller.expectOne(GroceryDocument).flush({
-      data: { shops: [coop], products: [apple, baguette, product('3', 'pomme', null, 'PENDING')] },
+      data: { shops: [coop], categories, products: [apple, baguette, product('3', 'pomme', null, 'PENDING')] },
     });
     await fixture.whenStable();
     expect(toBuy(el)).toEqual(['baguette', 'apple', 'pomme']);
@@ -97,7 +108,7 @@ describe('Grocery', () => {
     fixture.detectChanges();
     controller
       .expectOne(GroceryDocument)
-      .flush({ data: { shops: [coop], products: [product('3', 'pomme', null, 'PENDING')] } });
+      .flush({ data: { shops: [coop], categories, products: [product('3', 'pomme', null, 'PENDING')] } });
     await fixture.whenStable();
     expect(start).toHaveBeenCalledWith(2000);
 
@@ -105,8 +116,91 @@ describe('Grocery', () => {
     ref.refetch();
     controller
       .expectOne(GroceryDocument)
-      .flush({ data: { shops: [coop], products: [product('3', 'pomme', 'Fruits')] } });
+      .flush({ data: { shops: [coop], categories, products: [product('3', 'pomme', 'Fruits')] } });
     await fixture.whenStable();
     expect(stop).toHaveBeenCalled();
+  });
+
+  describe('Shops panel', () => {
+    async function openShops() {
+      const fixture = await render();
+      const el = fixture.nativeElement as HTMLElement;
+      el.querySelector<HTMLButtonElement>('[aria-label="Edit shops and aisle order"]')!.click();
+      await fixture.whenStable();
+      return { fixture, el };
+    }
+    /** Mutation results reach the next step a tick later. */
+    const tick = () => new Promise((r) => setTimeout(r));
+    const refetch = async (shops: unknown[]) => {
+      await tick();
+      controller.expectOne(GroceryDocument).flush({ data: { shops, categories, products: [apple, baguette] } });
+    };
+
+    it('opens from the list and goes back', async () => {
+      const { fixture, el } = await openShops();
+      expect(el.querySelector('app-grocery-screen')!.hasAttribute('hidden')).toBe(true);
+      expect(el.querySelector('app-shop-editor')!.hasAttribute('hidden')).toBe(false);
+      el.querySelector<HTMLButtonElement>('[aria-label="Back to the list"]')!.click();
+      await fixture.whenStable();
+      expect(el.querySelector('app-shop-editor')!.hasAttribute('hidden')).toBe(true);
+    });
+
+    it('saves a reorder and the list follows it', async () => {
+      const { fixture, el } = await openShops();
+      el.querySelector('[aria-label^="Move Fruits,"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+      const op = controller.expectOne(SetShopCategoryOrderDocument);
+      expect(op.operation.variables).toEqual({ shopId: 'coop', categoryIds: ['Fruits', 'Pain'] });
+      op.flush({ data: { setShopCategoryOrder: { __typename: 'Shop', id: 'coop' } } });
+      await refetch([{ ...coop, categoryOrder: [category('Fruits'), category('Pain')] }]);
+      await fixture.whenStable();
+      expect(toBuy(el)).toEqual(['apple', 'baguette']);
+    });
+
+    it('creates a missing category before saving the order', async () => {
+      const { fixture, el } = await openShops();
+      const input = el.querySelector<HTMLInputElement>('app-shop-editor app-add-bar input')!;
+      input.value = 'Épices';
+      input.dispatchEvent(new Event('input'));
+      el.querySelector('app-shop-editor app-add-bar form')!.dispatchEvent(new Event('submit'));
+      const add = controller.expectOne(AddCategoryDocument);
+      expect(add.operation.variables).toEqual({ name: 'Épices' });
+      add.flush({ data: { addCategory: { __typename: 'ProductCategory', id: 'epices' } } });
+      await tick();
+      const order = controller.expectOne(SetShopCategoryOrderDocument);
+      expect(order.operation.variables).toEqual({ shopId: 'coop', categoryIds: ['Pain', 'Fruits', 'epices'] });
+      order.flush({ data: { setShopCategoryOrder: { __typename: 'Shop', id: 'coop' } } });
+      await refetch([coop]);
+      await fixture.whenStable();
+    });
+
+    it('renames a shop and keeps its location', async () => {
+      const { fixture, el } = await openShops();
+      const name = el.querySelector<HTMLInputElement>('#shop-name')!;
+      name.value = 'Coop Pronto';
+      name.dispatchEvent(new Event('input'));
+      name.dispatchEvent(new Event('change'));
+      const op = controller.expectOne(UpdateShopDocument);
+      expect(op.operation.variables).toEqual({ id: 'coop', name: 'Coop Pronto', latitude: 46.5, longitude: 6.6 });
+      op.flush({ data: { updateShop: { __typename: 'Shop', id: 'coop' } } });
+      await refetch([{ ...coop, name: 'Coop Pronto' }]);
+      await fixture.whenStable();
+    });
+
+    it('adds a shop with a copy of the order and selects it', async () => {
+      const { fixture, el } = await openShops();
+      Array.from(el.querySelectorAll<HTMLButtonElement>('.chip')).find((b) => b.textContent!.includes('New shop'))!.click();
+      const add = controller.expectOne(AddShopDocument);
+      expect(add.operation.variables).toEqual({ name: 'New shop' });
+      add.flush({ data: { addShop: { __typename: 'Shop', id: 'new' } } });
+      await tick();
+      const order = controller.expectOne(SetShopCategoryOrderDocument);
+      expect(order.operation.variables).toEqual({ shopId: 'new', categoryIds: ['Pain', 'Fruits'] });
+      order.flush({ data: { setShopCategoryOrder: { __typename: 'Shop', id: 'new' } } });
+      const fresh = { ...coop, id: 'new', name: 'New shop', latitude: null, longitude: null };
+      await refetch([fresh, coop]);
+      await fixture.whenStable();
+      expect(el.querySelector('.chip[aria-pressed="true"]')!.textContent!.trim()).toBe('New shop');
+      expect(el.querySelector('select')!.value).toBe('new');
+    });
   });
 });

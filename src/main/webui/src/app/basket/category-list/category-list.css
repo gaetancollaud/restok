@@ -1,0 +1,108 @@
+:host {
+  display: block;
+}
+
+.cats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cats.dragging {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--size-touch);
+  padding-right: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--ink);
+  transition: transform 150ms ease-out;
+}
+
+/* The held row follows the pointer with no transition */
+.row.held {
+  transition: none;
+  z-index: 2;
+  background: var(--surface-raised);
+  outline: 3px solid var(--brand);
+}
+
+/* Drag on the grip only, so the rest of the row still scrolls the page */
+.handle {
+  flex: none;
+  width: 48px;
+  height: var(--size-touch);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-muted);
+  display: grid;
+  place-items: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.cats.dragging .handle {
+  cursor: grabbing;
+}
+
+.num {
+  flex: none;
+  min-width: 20px;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.remove {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.remove:hover,
+.remove:active {
+  color: var(--danger);
+}
+
+.handle:focus-visible,
+.remove:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.hint {
+  margin: 0 0 var(--space-3);
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}

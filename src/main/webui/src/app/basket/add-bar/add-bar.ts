@@ -8,6 +8,9 @@ import { Component, input, output, signal } from '@angular/core';
 })
 export class AddBar {
   readonly placeholder = input('Add an item');
+  /** Accessible names of the input and the + button. */
+  readonly label = input('New item');
+  readonly buttonLabel = input('Add item');
   /** The trimmed name, on + or Enter; the bar then clears itself. */
   readonly add = output<string>();
 

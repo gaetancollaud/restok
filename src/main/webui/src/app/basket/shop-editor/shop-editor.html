@@ -1,0 +1,61 @@
+<header class="header">
+  <button type="button" class="iconbtn" aria-label="Back to the list" (click)="back.emit()">
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+  <h1 class="title">Shops</h1>
+</header>
+<main class="main stack">
+  <section>
+    <h2 class="section">Shop</h2>
+    <div class="chips" role="group" aria-label="Shops">
+      @for (s of state(); track s.id) {
+        <button type="button" class="chip" [attr.aria-pressed]="s.id === shop()?.id" (click)="select(s.id)">
+          {{ s.name || 'Untitled' }}
+        </button>
+      }
+      <button type="button" class="chip new" (click)="newShop()">
+        <svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
+          <path d="M13 4v18M4 13h18" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" />
+        </svg>
+        New shop
+      </button>
+    </div>
+  </section>
+  @if (shop(); as shop) {
+    <section>
+      <label class="section" for="shop-name">Name</label>
+      <input
+        #name
+        id="shop-name"
+        class="name"
+        autocomplete="off"
+        [value]="shop.name"
+        (input)="typeName($any($event.target).value)"
+        (change)="saveName()"
+      />
+    </section>
+    <section>
+      <h2 class="section">Aisle order · {{ shop.name || 'Untitled' }}</h2>
+      <p class="hint">Drag the grip to match the way you walk through the shop. The grocery list follows this order.</p>
+      <app-category-list
+        [categories]="shop.aisles ?? []"
+        (categoriesChange)="setOrder($event)"
+        [label]="'Aisle order for ' + shop.name"
+      />
+    </section>
+    @if (state().length > 1) {
+      <section>
+        <button type="button" class="danger" [class.confirm]="confirming()" (click)="deleteShop()">
+          {{ confirming() ? 'Tap again to delete ' + (shop.name || 'this shop') : 'Delete shop' }}
+        </button>
+      </section>
+    }
+  }
+</main>
+@if (shop()) {
+  <footer class="footer">
+    <app-add-bar placeholder="Add a category" label="New category" buttonLabel="Add category" (add)="addCategory($event)" />
+  </footer>
+}

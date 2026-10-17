@@ -26,6 +26,11 @@ export interface Item {
   boughtAt?: number;
 }
 
+/** The shop with this id, or the first shop when it is gone. */
+export function findShop(shops: Shop[], id: string): Shop | undefined {
+  return shops.find((s) => s.id === id) ?? shops[0];
+}
+
 /** The items still to buy, in the shop's aisle order; unknown aisles last, then by name. */
 export function orderFor(items: Item[], shop?: Shop): Item[] {
   const order = shop?.aisles ?? [];

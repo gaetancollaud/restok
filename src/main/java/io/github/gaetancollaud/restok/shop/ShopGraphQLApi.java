@@ -43,7 +43,7 @@ public class ShopGraphQLApi {
 
     @Mutation
     @Transactional
-    public @NonNull Shop addShop(@NonNull String name, double latitude, double longitude) throws GraphQLException {
+    public @NonNull Shop addShop(@NonNull String name, Double latitude, Double longitude) throws GraphQLException {
         validate(name, latitude, longitude);
         Shop shop = new Shop();
         apply(shop, name, latitude, longitude);
@@ -53,7 +53,7 @@ public class ShopGraphQLApi {
 
     @Mutation
     @Transactional
-    public @NonNull Shop updateShop(@NonNull UUID id, @NonNull String name, double latitude, double longitude)
+    public @NonNull Shop updateShop(@NonNull UUID id, @NonNull String name, Double latitude, Double longitude)
             throws GraphQLException {
         validate(name, latitude, longitude);
         Shop shop = find(id);
@@ -93,9 +93,15 @@ public class ShopGraphQLApi {
         return repository.findByIdOptional(id).orElseThrow(() -> new GraphQLException("shop not found"));
     }
 
-    private static void validate(String name, double latitude, double longitude) throws GraphQLException {
+    private static void validate(String name, Double latitude, Double longitude) throws GraphQLException {
         if (name.isBlank()) {
             throw new GraphQLException("name must not be blank");
+        }
+        if ((latitude == null) != (longitude == null)) {
+            throw new GraphQLException("latitude and longitude must be given together");
+        }
+        if (latitude == null) {
+            return;
         }
         if (latitude < -90 || latitude > 90) {
             throw new GraphQLException("latitude must be between -90 and 90");
@@ -105,7 +111,7 @@ public class ShopGraphQLApi {
         }
     }
 
-    private static void apply(Shop shop, String name, double latitude, double longitude) {
+    private static void apply(Shop shop, String name, Double latitude, Double longitude) {
         shop.name = name.strip();
         shop.latitude = latitude;
         shop.longitude = longitude;

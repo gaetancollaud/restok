@@ -20,9 +20,8 @@ public class Shop {
     @Column(nullable = false, columnDefinition = "text")
     public String name;
 
-    @Column(nullable = false)
-    public double latitude;
+    /** Null together with longitude when the shop has no location. */
+    public Double latitude;
 
-    @Column(nullable = false)
-    public double longitude;
+    public Double longitude;
 }

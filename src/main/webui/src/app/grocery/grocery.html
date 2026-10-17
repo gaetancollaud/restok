@@ -1,10 +1,24 @@
 @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
 }
+<!-- Both panels stay mounted, so the list keeps its scroll position while shops are edited -->
 <app-grocery-screen
+  [hidden]="panel() !== 'list'"
   [shops]="shops()"
   [items]="items()"
   [classify]="serverClassifies"
+  [(shopId)]="shopId"
+  (editShops)="panel.set('shops')"
   (boughtChange)="setBought($event)"
   (added)="add($event)"
+/>
+<app-shop-editor
+  [hidden]="panel() !== 'shops'"
+  [shops]="shops()"
+  [(shopId)]="shopId"
+  (back)="panel.set('list')"
+  (addShop)="addShop($event)"
+  (rename)="rename($event)"
+  (remove)="removeShop($event)"
+  (orderChange)="setOrder($event)"
 />
