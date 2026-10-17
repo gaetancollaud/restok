@@ -74,6 +74,10 @@ One workflow `.github/workflows/ci.yml`, triggers: `pull_request`, `push` to `ma
 ### D12. Dev and test infra via Dev Services
 `quarkus dev` and tests start PostgreSQL automatically (both JDBC and reactive datasources point to it). No Keycloak.
 
+### D13. Local packaged run with Docker Compose
+Root `docker-compose.yml` builds the app from the Quarkus `src/main/docker/Dockerfile.native-micro` (expects `target/*-runner`, so `./mvnw package -Dnative` runs first) and starts PostgreSQL with a healthcheck the app waits on. Secrets (OpenRouter key, DB password) come from a git-ignored `.env`; `.env.example` is the committed template. Not picked up by Quarkus Compose Dev Services (those only load `*-dev-service*.yml`). CI keeps Jib for the published image; both use the same UBI 9 micro base and uid 1001.
+- Trade-off: two image definitions (Dockerfile for local, Jib for CI). Acceptable while small; switch CI to the Dockerfile if they drift.
+
 ## Risks / Trade-offs
 
 - [Quarkus 3.40 / Java 25 / Mandrel 25 availability or extension compatibility (Quinoa, quarkus-langchain4j are Quarkiverse)] → Check versions aligned with the 3.40 platform BOM in task 1; fall back to the latest compatible patch and record it.
