@@ -1,4 +1,6 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Pwa } from '../../pwa/pwa';
 import { Item, Shop } from '../basket';
 import { GroceryScreen } from './grocery-screen';
 
@@ -237,6 +239,38 @@ describe('GroceryScreen', () => {
       popup.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click();
       await fixture.whenStable();
       expect(el.querySelector('app-product-popup')).toBeNull();
+    });
+  });
+
+  describe('install / update button', () => {
+    const stub = { canInstall: signal(false), updateReady: signal(false), install: vi.fn(), update: vi.fn() };
+    beforeEach(() => TestBed.configureTestingModule({ providers: [{ provide: Pwa, useValue: stub }] }));
+
+    const button = (el: HTMLElement) => el.querySelector<HTMLButtonElement>('[aria-label$="Restok"]');
+
+    it('shows nothing when installed and up to date', async () => {
+      stub.canInstall.set(false);
+      stub.updateReady.set(false);
+      expect(button((await render()).nativeElement)).toBeNull();
+    });
+
+    it('offers install when the browser can install', async () => {
+      stub.canInstall.set(true);
+      stub.updateReady.set(false);
+      const install = button((await render()).nativeElement)!;
+      expect(install.getAttribute('aria-label')).toBe('Install Restok');
+      install.click();
+      expect(stub.install).toHaveBeenCalledOnce();
+    });
+
+    it('offers only update when a new version is ready', async () => {
+      stub.canInstall.set(true);
+      stub.updateReady.set(true);
+      const el = (await render()).nativeElement as HTMLElement;
+      expect(el.querySelectorAll('[aria-label$="Restok"]')).toHaveLength(1);
+      button(el)!.click();
+      expect(stub.update).toHaveBeenCalledOnce();
+      expect(button(el)!.getAttribute('aria-label')).toBe('Update Restok');
     });
   });
 });

@@ -10,6 +10,19 @@
       <path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   </button>
+  @if (pwa.updateReady()) {
+    <button type="button" class="iconbtn" aria-label="Update Restok" title="Update" (click)="pwa.update()">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  } @else if (pwa.canInstall()) {
+    <button type="button" class="iconbtn" aria-label="Install Restok" title="Install" (click)="pwa.install()">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 4v11M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  }
 </header>
 <main class="main">
   <h2 class="section">{{ toBuy().length ? 'To buy · ' + toBuy().length : 'All done' }}</h2>
