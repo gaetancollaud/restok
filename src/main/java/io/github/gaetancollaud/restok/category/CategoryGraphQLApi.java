@@ -1,5 +1,6 @@
 package io.github.gaetancollaud.restok.category;
 
+import io.github.gaetancollaud.restok.shop.ShopCategoryRepository;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.graphql.GraphQLApi;
@@ -17,6 +18,9 @@ public class CategoryGraphQLApi {
     @Inject
     ProductCategoryRepository repository;
 
+    @Inject
+    ShopCategoryRepository orderRepository;
+
     @Query("categories")
     public @NonNull List<@NonNull ProductCategory> categories() {
         return repository.listByName();
@@ -28,6 +32,8 @@ public class CategoryGraphQLApi {
         ProductCategory category = new ProductCategory();
         category.name = validName(name, null);
         repository.persist(category);
+        repository.flush(); // the native insert below references the new row
+        orderRepository.appendToAllShops(category);
         return category;
     }
 

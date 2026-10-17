@@ -21,6 +21,17 @@ public class ShopCategoryRepository implements PanacheRepositoryBase<ShopCategor
                         Collectors.mapping(sc -> sc.category, Collectors.toCollection(ArrayList::new))));
     }
 
+    /** Puts a flushed category last in every shop's order, first in an empty one. Must run in a transaction. */
+    public void appendToAllShops(ProductCategory category) {
+        getEntityManager().createNativeQuery("""
+                        insert into shop_category_order (shop_id, category_id, position)
+                        select s.id, :category,
+                               coalesce((select max(o.position) + 1 from shop_category_order o where o.shop_id = s.id), 0)
+                        from shop s""")
+                .setParameter("category", category.id)
+                .executeUpdate();
+    }
+
     /** Replaces the shop's whole order. Must run in a transaction. */
     public void replace(Shop shop, List<ProductCategory> ordered) {
         delete("shop.id", shop.id);

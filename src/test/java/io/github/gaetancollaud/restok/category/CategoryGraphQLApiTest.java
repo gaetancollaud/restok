@@ -2,6 +2,7 @@ package io.github.gaetancollaud.restok.category;
 
 import io.agroal.api.AgroalDataSource;
 import io.github.gaetancollaud.restok.TestDb;
+import io.github.gaetancollaud.restok.shop.ShopGraphQLApiTest;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @QuarkusTest
 class CategoryGraphQLApiTest {
@@ -109,5 +111,31 @@ class CategoryGraphQLApiTest {
         String id = add("Spices");
         post(DELETE, Map.of("id", id)).body("errors", nullValue()).body("data.deleteCategory", is(id));
         post(LIST).body("data.categories.name", not(hasItem("Spices")));
+    }
+
+    @Test
+    void addAppendsToEveryShop() {
+        String coop = ShopGraphQLApiTest.addShop("Coop");
+        String lidl = ShopGraphQLApiTest.addShop("Lidl");
+        ShopGraphQLApiTest.setOrder(coop, "Pain", "Fruits");
+        add("Épices");
+        assertEquals(List.of("Pain", "Fruits", "Épices"), ShopGraphQLApiTest.orderOf(coop));
+        assertEquals(List.of("Épices"), ShopGraphQLApiTest.orderOf(lidl));
+    }
+
+    @Test
+    void rejectedAddChangesNoOrder() {
+        String coop = ShopGraphQLApiTest.addShop("Coop");
+        ShopGraphQLApiTest.setOrder(coop, "Pain", "Fruits");
+        post(ADD, Map.of("name", "fruits")).body("errors[0].message", is("category name already exists"));
+        post(ADD, Map.of("name", "  ")).body("errors[0].message", is("name must not be blank"));
+        assertEquals(List.of("Pain", "Fruits"), ShopGraphQLApiTest.orderOf(coop));
+    }
+
+    @Test
+    void shopAddedLaterStartsEmpty() {
+        add("Épices");
+        String coop = ShopGraphQLApiTest.addShop("Coop");
+        assertEquals(List.of(), ShopGraphQLApiTest.orderOf(coop));
     }
 }

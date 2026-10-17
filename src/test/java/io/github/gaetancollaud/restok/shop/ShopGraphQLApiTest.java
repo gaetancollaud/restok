@@ -62,7 +62,7 @@ public class ShopGraphQLApiTest {
         post(SET_ORDER, Map.of("id", shopId, "ids", ids)).body("errors", nullValue());
     }
 
-    static List<String> orderOf(String shopId) {
+    public static List<String> orderOf(String shopId) {
         return post(LIST).extract().path("data.shops.find { it.id == '" + shopId + "' }.categoryOrder.name");
     }
 
