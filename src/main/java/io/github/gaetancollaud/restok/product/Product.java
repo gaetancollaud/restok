@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import org.eclipse.microprofile.graphql.NonNull;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -27,6 +28,10 @@ public class Product {
 
     @Column(nullable = false)
     public boolean bought;
+
+    /** When it was last marked bought; null while not bought. */
+    @Column(name = "bought_at")
+    public Instant boughtAt;
 
     /** Null when uncategorized. Eager: GraphQL serializes it after the session is gone. */
     @ManyToOne

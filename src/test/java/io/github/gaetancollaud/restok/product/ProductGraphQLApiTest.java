@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.nullValue;
 @QuarkusTest
 class ProductGraphQLApiTest {
 
-    static final String FIELDS = "{ id name bought classification category { name } }";
+    static final String FIELDS = "{ id name bought boughtAt classification category { name } }";
     static final String LIST = "query($shopId: String) { products(shopId: $shopId) " + FIELDS + " }";
     static final String ADD = "mutation($name: String!) { addProduct(name: $name) " + FIELDS + " }";
     static final String SET_BOUGHT = "mutation($id: String!, $b: Boolean!) { setProductBought(id: $id, bought: $b) " + FIELDS + " }";
@@ -111,8 +111,10 @@ class ProductGraphQLApiTest {
     @Test
     void boughtCanBeCheckedAndUnchecked() {
         String id = addProduct("apple");
-        post(SET_BOUGHT, Map.of("id", id, "b", true)).body("data.setProductBought.bought", is(true));
-        post(SET_BOUGHT, Map.of("id", id, "b", false)).body("data.setProductBought.bought", is(false));
+        post(SET_BOUGHT, Map.of("id", id, "b", true)).body("data.setProductBought.bought", is(true))
+                .body("data.setProductBought.boughtAt", notNullValue());
+        post(SET_BOUGHT, Map.of("id", id, "b", false)).body("data.setProductBought.bought", is(false))
+                .body("data.setProductBought.boughtAt", nullValue());
         post(LIST, shop(null)).body("data.products.bought", contains(false));
     }
 

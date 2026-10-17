@@ -1,0 +1,35 @@
+query Grocery {
+  shops {
+    id
+    name
+    categoryOrder {
+      id
+      name
+    }
+  }
+  products {
+    id
+    name
+    bought
+    boughtAt
+    classification
+    category {
+      id
+      name
+    }
+  }
+}
+
+mutation AddProduct($name: String!) {
+  addProduct(name: $name) {
+    id
+  }
+}
+
+mutation SetProductBought($id: String!, $bought: Boolean!) {
+  setProductBought(id: $id, bought: $bought) {
+    id
+    bought
+    boughtAt
+  }
+}

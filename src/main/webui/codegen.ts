@@ -7,7 +7,7 @@ const config: CodegenConfig = {
   generates: {
     'src/app/graphql/generated.ts': {
       plugins: ['typescript-operations', 'typescript-apollo-angular'],
-      config: { addExplicitOverride: true },
+      config: { addExplicitOverride: true, scalars: { DateTime: 'string' } },
     },
   },
 };

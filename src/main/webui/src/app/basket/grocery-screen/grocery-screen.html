@@ -1,0 +1,36 @@
+<header class="header">
+  <app-shop-select [shops]="shops()" [value]="shopId()" (valueChange)="selectShop($event)" />
+</header>
+<main class="main">
+  <h2 class="section">{{ toBuy().length ? 'To buy · ' + toBuy().length : 'All done' }}</h2>
+  @if (toBuy().length) {
+    <app-item-grid label="To buy">
+      @for (item of toBuy(); track item.id) {
+        <app-item-tile
+          [name]="item.name"
+          [meta]="item.meta"
+          [status]="item.status"
+          [category]="item.aisle"
+          (press)="setBought(item.id, true)"
+        />
+      }
+    </app-item-grid>
+  }
+  @if (bought().length) {
+    <h2 class="section bought">Bought · tap to add again</h2>
+    <app-item-grid label="Bought" compact>
+      @for (item of bought(); track item.id) {
+        <app-item-tile
+          [name]="item.name"
+          variant="bought"
+          [status]="item.status"
+          [category]="item.aisle"
+          (press)="setBought(item.id, false)"
+        />
+      }
+    </app-item-grid>
+  }
+</main>
+<footer class="footer">
+  <app-add-bar (add)="add($event)" />
+</footer>

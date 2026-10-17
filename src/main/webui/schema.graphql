@@ -15,6 +15,8 @@ type Mutation {
 
 type Product {
   bought: Boolean!
+  "ISO-8601"
+  boughtAt: DateTime
   category: ProductCategory
   classification: ProductClassification!
   id: String!
@@ -46,3 +48,12 @@ enum ProductClassification {
   PENDING
   UNCLASSIFIED
 }
+
+"Scalar for BigDecimal"
+scalar BigDecimal
+
+"Scalar for BigInteger"
+scalar BigInteger
+
+"Scalar for DateTime"
+scalar DateTime

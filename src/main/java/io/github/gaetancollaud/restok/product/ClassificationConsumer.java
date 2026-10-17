@@ -73,7 +73,7 @@ public class ClassificationConsumer {
             String answer = classifier.classify(request.productName(), names).strip();
             return request.categories().stream().filter(c -> c.name.equalsIgnoreCase(answer)).findFirst().orElse(null);
         } catch (RuntimeException e) {
-            LOG.warnf("AI classification of '%s' failed: %s", request.productName(), e.toString());
+            LOG.errorf(e, "AI classification of '%s' failed", request.productName());
             return null;
         }
     }

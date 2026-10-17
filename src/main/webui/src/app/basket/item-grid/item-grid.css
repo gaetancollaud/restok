@@ -1,0 +1,10 @@
+:host {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(var(--size-tile-min), 1fr));
+}
+
+:host(.compact) {
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(var(--size-tile-bought-min), 1fr));
+}

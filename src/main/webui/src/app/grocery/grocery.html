@@ -1,0 +1,10 @@
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+<app-grocery-screen
+  [shops]="shops()"
+  [items]="items()"
+  [classify]="serverClassifies"
+  (boughtChange)="setBought($event)"
+  (added)="add($event)"
+/>

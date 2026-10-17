@@ -1,0 +1,8 @@
+<select class="select" [attr.aria-label]="label()" (change)="value.set($any($event.target).value)">
+  @for (shop of shops(); track shop.id) {
+    <option [value]="shop.id" [selected]="shop.id === value()">{{ shop.name }}</option>
+  }
+</select>
+<svg class="chevron" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+  <path d="M5 8l6 6 6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

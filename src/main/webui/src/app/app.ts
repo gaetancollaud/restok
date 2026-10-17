@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Grocery } from './grocery/grocery';
 
 @Component({
-  imports: [RouterOutlet, RouterLink],
+  imports: [Grocery],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',

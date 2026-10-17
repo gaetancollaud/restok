@@ -13,6 +13,7 @@ import org.eclipse.microprofile.graphql.Mutation;
 import org.eclipse.microprofile.graphql.NonNull;
 import org.eclipse.microprofile.graphql.Query;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -61,7 +62,10 @@ public class ProductGraphQLApi {
     @Transactional
     public @NonNull Product setProductBought(@NonNull UUID id, boolean bought) throws GraphQLException {
         Product product = find(id);
-        product.bought = bought;
+        if (product.bought != bought) {
+            product.bought = bought;
+            product.boughtAt = bought ? Instant.now() : null;
+        }
         return product;
     }
 

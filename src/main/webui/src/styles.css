@@ -1,1 +1,58 @@
-/* You can add global styles to this file, and also import other style files */
+/* Basket design tokens (light, then dark). Components read these custom properties. */
+:root {
+  --surface: #fff7ef;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f1e7dd;
+  --ink: #2b1a0e;
+  --ink-muted: #6b4f3a;
+  --brand: #c2410c;
+  --on-brand: #ffffff;
+  --brand-soft: #ffe2c7;
+  --brand-pressed: #9a3412;
+  --status-pending: #c2410c;
+  --status-classified: #15803d;
+  --status-unclassified: #b91c1c;
+  --line: #ead8c6;
+
+  --font-sans: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  --size-touch: 56px;
+  --size-tile-min: 128px;
+  --size-tile-bought-min: 96px;
+  --size-status-dot: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #1b1410;
+    --surface-raised: #261c16;
+    --surface-sunken: #35291f;
+    --ink: #f7ece1;
+    --ink-muted: #c7b19f;
+    --brand: #fb8c3f;
+    --on-brand: #1b1410;
+    --brand-soft: #3d2716;
+    --brand-pressed: #fdab70;
+    --status-pending: #fb8c3f;
+    --status-classified: #4ade80;
+    --status-unclassified: #ff8a8a;
+    --line: #3a2d24;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}

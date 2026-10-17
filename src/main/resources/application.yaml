@@ -8,6 +8,9 @@ quarkus:
   hibernate-orm:
     schema-management:
       strategy: validate
+  # Declare scalars (e.g. DateTime) in the published schema, so the frontend codegen knows them
+  smallrye-graphql:
+    schema-include-scalars: true
 
   # Angular SPA (src/main/webui), built and served by Quinoa from the same origin
   quinoa:
@@ -27,8 +30,8 @@ quarkus:
       chat-model:
         model-name: ${OPENROUTER_MODEL:openrouter/auto}
       timeout: ${OPENROUTER_TIMEOUT:60s}
-      log-requests: false
-      log-responses: false
+      log-requests: true
+      log-responses: true
 
   # Observability: OpenTelemetry metrics (HTTP server + JVM) and traces over OTLP.
   # Set OTEL_EXPORTER_OTLP_ENDPOINT in prod; OTEL_SDK_DISABLED=true turns export off. No collector needed in dev/test.

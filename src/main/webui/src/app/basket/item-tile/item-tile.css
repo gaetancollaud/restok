@@ -1,0 +1,136 @@
+:host {
+  display: block;
+}
+
+.tile {
+  appearance: none;
+  box-sizing: border-box;
+  border: 0;
+  margin: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--brand-soft);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 80ms ease-out;
+  touch-action: manipulation;
+}
+
+.tile:active {
+  transform: scale(0.96);
+}
+
+.tile:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.label {
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+/* Top row: light category name on the left, status dot on the right */
+.tile.has-top {
+  padding-top: calc(var(--space-3) + 20px + var(--space-2));
+}
+
+.top {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  right: var(--space-3);
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.cat {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cat.pending {
+  font-style: italic;
+}
+
+/* A ring while pending (told apart by shape), a disc otherwise */
+.dot {
+  flex: none;
+  box-sizing: border-box;
+  width: var(--size-status-dot);
+  height: var(--size-status-dot);
+  border-radius: 50%;
+}
+
+.dot.pending {
+  border: 3px solid var(--status-pending);
+}
+
+.dot.classified {
+  background: var(--status-classified);
+}
+
+.dot.unclassified {
+  background: var(--status-unclassified);
+}
+
+/* No strike-through: Bought tiles are suggestions to add again */
+.tile.bought {
+  background: var(--surface-sunken);
+}
+
+.tile.bought .label {
+  font-size: 17px;
+  line-height: 22px;
+}
+
+/* No category name (too narrow); the dot sits just left of the + badge */
+.tile.bought .top {
+  top: var(--space-2);
+  left: var(--space-2);
+  right: var(--space-2);
+  height: 32px;
+}
+
+.tile.bought.has-top {
+  padding-top: var(--space-3);
+}
+
+.readd {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--on-brand);
+  display: grid;
+  place-items: center;
+}
