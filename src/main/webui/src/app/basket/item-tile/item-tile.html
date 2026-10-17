@@ -4,7 +4,7 @@
   [class.bought]="bought()"
   [class.has-top]="hasTop()"
   [attr.aria-label]="ariaLabel()"
-  (click)="press.emit()"
+  (click)="tap()"
 >
   @if (hasTop()) {
     <!-- Already named in the accessible label -->

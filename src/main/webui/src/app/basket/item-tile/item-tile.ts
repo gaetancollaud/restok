@@ -1,6 +1,8 @@
 import { Component, computed, input, output } from '@angular/core';
 import { ClassificationStatus } from '../basket';
 
+const DOUBLE_TAP_MS = 400;
+
 /** A square, tappable grocery item. Place it inside an ItemGrid. */
 @Component({
   selector: 'app-item-tile',
@@ -18,7 +20,11 @@ export class ItemTile {
   readonly status = input<ClassificationStatus>();
   /** The category name, for the dot's tooltip and the accessible label when classified. */
   readonly category = input<string>();
+  /** To-buy tiles emit on a second tap within DOUBLE_TAP_MS, so a stray tap doesn't buy; Bought tiles on every tap. */
   readonly press = output<void>();
+
+  // ponytail: own double-tap instead of dblclick, which touch browsers don't fire reliably
+  private lastTap = 0;
 
   protected readonly bought = computed(() => this.variant() === 'bought');
   /** The dot is never the only cue: the label names the state too. */
@@ -57,10 +63,20 @@ export class ItemTile {
         return 'No category';
     }
   });
+  protected tap() {
+    const now = Date.now();
+    if (this.bought() || now - this.lastTap < DOUBLE_TAP_MS) {
+      this.lastTap = 0;
+      this.press.emit();
+    } else {
+      this.lastTap = now;
+    }
+  }
+
   protected readonly ariaLabel = computed(() => {
     const state = this.state() ? ', ' + this.state() : '';
     return this.bought()
       ? `Add ${this.name()} again${state}`
-      : `${this.name()}${this.meta() ? ', ' + this.meta() : ''}${state}, mark as bought`;
+      : `${this.name()}${this.meta() ? ', ' + this.meta() : ''}${state}, tap twice to mark as bought`;
   });
 }

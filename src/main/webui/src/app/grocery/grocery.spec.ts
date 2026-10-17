@@ -52,7 +52,9 @@ describe('Grocery', () => {
   it('marks a tapped product bought', async () => {
     const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
-    el.querySelector<HTMLButtonElement>('[aria-label="apple, Fruits, mark as bought"]')!.click();
+    const tile = el.querySelector<HTMLButtonElement>('[aria-label="apple, Fruits, tap twice to mark as bought"]')!;
+    tile.click();
+    tile.click();
     const op = controller.expectOne(SetProductBoughtDocument);
     expect(op.operation.variables).toEqual({ id: '1', bought: true });
     op.flush({
@@ -80,7 +82,7 @@ describe('Grocery', () => {
     });
     await fixture.whenStable();
     expect(toBuy(el)).toEqual(['baguette', 'apple', 'pomme']);
-    expect(el.querySelector('[aria-label="pomme, sorting into a category, mark as bought"] .dot.pending')).not.toBeNull();
+    expect(el.querySelector('[aria-label="pomme, sorting into a category, tap twice to mark as bought"] .dot.pending')).not.toBeNull();
   });
 
   it('polls only while a product is pending', async () => {
