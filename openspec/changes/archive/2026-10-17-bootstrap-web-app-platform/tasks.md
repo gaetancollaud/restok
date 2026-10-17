@@ -52,9 +52,9 @@
 
 ## 9. GitHub Actions
 
-- [ ] 9.1 Add `.github/workflows/ci.yml` job `verify` (Temurin 25, Maven cache, `./mvnw -B verify`, schema `git diff --exit-code`, `kubectl kustomize deploy/overlays/example`); verify it passes on a pull request
-- [ ] 9.2 Add job `native` (needs `verify`): native build + `*IT` on all triggers; on `main`/`v*` also push to GHCR with tags per ci-delivery spec using `GITHUB_TOKEN`, `packages: write` only on this job; verify on a PR no image is pushed, and after merge `ghcr.io/gaetancollaud/restok:main` and `:sha-<short>` exist
-- [ ] 9.3 Add a CI badge and pipeline description to README; verify the badge renders on GitHub
+- [x] 9.1 Add `.github/workflows/ci.yml` job `verify` (Temurin 25, Maven cache, `./mvnw -B verify`, schema `git diff --exit-code`, `kubectl kustomize deploy/overlays/example`); verify it passes on a pull request
+- [x] 9.2 Add job `native` (needs `verify`): native build + `*IT` on all triggers; on `main`/`v*` also push to GHCR with tags per ci-delivery spec using `GITHUB_TOKEN`, `packages: write` only on this job; verify on a PR no image is pushed, and after merge `ghcr.io/gaetancollaud/restok:main` and `:sha-<short>` exist
+- [x] 9.3 Add a CI badge and pipeline description to README; verify the badge renders on GitHub
 
 ## 10. Integration check
 
