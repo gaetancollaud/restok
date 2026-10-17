@@ -20,7 +20,7 @@ services:
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.native-micro
-    image: restok:local
+    image: ghcr.io/gaetancollaud/restok:main
     depends_on:
       postgres:
         condition: service_healthy

@@ -57,6 +57,8 @@ quarkus:
   native:
     container-build: true
     builder-image: quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25
+    # Mandrel defaults to -march=x86-64-v3 (AVX2); the cluster CPUs lack it
+    additional-build-args: -march=compatibility
 
   # Container image (Jib): native executable on the UBI 9 micro base, non-root
   container-image:
