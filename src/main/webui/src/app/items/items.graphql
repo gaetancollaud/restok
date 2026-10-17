@@ -1,0 +1,13 @@
+query Items {
+  items {
+    id
+    name
+  }
+}
+
+mutation AddItem($name: String!) {
+  addItem(name: $name) {
+    id
+    name
+  }
+}

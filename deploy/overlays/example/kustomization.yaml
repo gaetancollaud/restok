@@ -1,0 +1,26 @@
+# Example environment. Copy this overlay per environment and adjust the values.
+# The Secret is NOT part of the overlay; create it once per namespace (see README "Deploy to Kubernetes").
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: restok
+resources:
+  - ../../base
+images:
+  - name: ghcr.io/gaetancollaud/restok
+    newTag: main
+configMapGenerator:
+  - name: restok-config
+    literals:
+      - QUARKUS_DATASOURCE_REACTIVE_URL=postgresql://postgres.database.svc:5432/restok
+      - QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://postgres.database.svc:5432/restok
+      - QUARKUS_DATASOURCE_USERNAME=restok
+      - OPENROUTER_MODEL=openrouter/auto
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.observability.svc:4317
+patches:
+  - target:
+      kind: Ingress
+      name: restok
+    patch: |-
+      - op: add
+        path: /spec/rules/0/host
+        value: restok.example.com

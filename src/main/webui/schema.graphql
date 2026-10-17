@@ -1,0 +1,14 @@
+type Item {
+  id: String!
+  name: String!
+}
+
+"Mutation root"
+type Mutation {
+  addItem(name: String!): Item!
+}
+
+"Query root"
+type Query {
+  items: [Item!]!
+}
