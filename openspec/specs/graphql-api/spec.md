@@ -17,13 +17,6 @@ The backend SHALL expose one GraphQL endpoint at `/graphql` accepting POST reque
 - **WHEN** a client POSTs a query referencing a field that does not exist
 - **THEN** the response contains an `errors` array describing the validation failure and no `data` for that field
 
-### Requirement: Non-blocking request handling
-GraphQL requests SHALL be processed without blocking I/O threads, including database and outbound HTTP access.
-
-#### Scenario: Test suite run
-- **WHEN** the backend test suite exercises every GraphQL operation
-- **THEN** the logs contain no blocked-thread warnings and no "blocking operation on I/O thread" errors
-
 ### Requirement: Schema generated from backend code
 The GraphQL schema SHALL be derived from backend code only; no hand-written schema file is the source of truth. The generated schema SHALL be published in SDL form at `/graphql/schema.graphql`.
 

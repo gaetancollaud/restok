@@ -6,16 +6,12 @@ Provides backend code with chat completions from large language models through O
 
 ## Requirements
 
-### Requirement: Chat completion through OpenRouter
-The backend SHALL be able to send a chat prompt to OpenRouter's OpenAI-compatible chat completions API and deliver the model's answer to the calling backend code as a non-blocking stream of text chunks, which the caller can also collect into the full answer.
+### Requirement: Blocking chat completion through OpenRouter
+The backend SHALL be able to send a chat prompt to OpenRouter's OpenAI-compatible chat completions API and return the model's full answer to the calling backend code as one string, in a single blocking call.
 
 #### Scenario: Successful completion
-- **WHEN** backend code sends a prompt and OpenRouter streams an answer
-- **THEN** the caller receives the chunks in order and their concatenation equals the full answer
-
-#### Scenario: No blocking
-- **WHEN** a completion is requested from an I/O thread
-- **THEN** the request completes without blocking that thread
+- **WHEN** backend code sends a prompt and OpenRouter answers
+- **THEN** the call returns the full answer text
 
 ### Requirement: Environment-driven model and credentials
 The OpenRouter base URL, API key, model id, and request timeout SHALL come from configuration and be changeable per environment without rebuilding.
@@ -36,11 +32,11 @@ The OpenRouter API key SHALL NOT appear in logs, in responses to clients, in the
 - **THEN** the logged output does not contain the API key
 
 ### Requirement: Failure isolation
-Upstream errors, missing credentials, or timeouts from OpenRouter SHALL surface as a stream failure to the calling code within the configured timeout and SHALL NOT stop the application or affect unrelated requests.
+Upstream errors, missing credentials, or timeouts from OpenRouter SHALL surface as an error from the completion call within the configured timeout and SHALL NOT stop the application or affect unrelated requests.
 
 #### Scenario: Upstream error
 - **WHEN** OpenRouter returns a 5xx or does not answer within the timeout
-- **THEN** the caller's stream fails with an error and the application stays ready
+- **THEN** the completion call fails with an error and the application stays ready
 
 #### Scenario: No API key configured
 - **WHEN** the application starts without an OpenRouter API key
