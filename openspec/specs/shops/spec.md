@@ -74,10 +74,3 @@ Stored shops and their category orders SHALL survive an application restart.
 #### Scenario: Restart
 - **WHEN** a shop with a category order is stored and the application restarts
 - **THEN** `shops` still returns the shop with the same order
-
-### Requirement: Shops page in the SPA
-The SPA SHALL provide a shops page to list, add, edit, and delete shops, and to set a shop's category order by adding, removing, and moving categories up or down. Changes SHALL appear without a page reload.
-
-#### Scenario: Reorder from the UI
-- **WHEN** a user moves "Fruits" above "Pain" for a shop and the change is saved
-- **THEN** the page shows the new order, and the shopping list sorted for that shop follows it

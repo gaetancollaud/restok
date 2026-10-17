@@ -51,10 +51,3 @@ The GraphQL API SHALL provide a `deleteCategory(id)` mutation that removes the c
 #### Scenario: Delete a used category
 - **WHEN** category "Fruits" is used by product "apple" and by a shop's order, and a client deletes "Fruits"
 - **THEN** "apple" has no category and the shop's order no longer contains "Fruits"
-
-### Requirement: Categories page in the SPA
-The SPA SHALL provide a categories page to list, add, rename, and delete categories. Changes SHALL appear without a page reload, and errors such as a duplicate name SHALL be shown to the user.
-
-#### Scenario: Duplicate from the UI
-- **WHEN** a user tries to add a category whose name already exists
-- **THEN** the page shows the error and the list is unchanged
