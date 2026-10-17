@@ -6,12 +6,14 @@
   [hidden]="panel() !== 'list'"
   [shops]="shops()"
   [items]="items()"
+  [categories]="categories()"
   [classify]="serverClassifies"
   [(shopId)]="shopId"
   (editShops)="panel.set('shops')"
   (boughtChange)="setBought($event)"
   (added)="add($event)"
   (shopChange)="setProductShop($event)"
+  (categoryChange)="setProductCategory($event)"
 />
 <app-shop-editor
   [hidden]="panel() !== 'shops'"

@@ -229,9 +229,10 @@ describe('GroceryScreen', () => {
       await fixture.whenStable();
       const popup = el.querySelector('app-product-popup')!;
       expect(popup.querySelector('h2')!.textContent).toBe('Tomatoes');
-      expect(popup.querySelector('select')!.value).toBe('');
+      const shopSelect = popup.querySelector<HTMLSelectElement>('select[aria-label="Buy only at"]')!;
+      expect(shopSelect.value).toBe('');
 
-      await pickShop(fixture, popup.querySelector('select')!, 'coop');
+      await pickShop(fixture, shopSelect, 'coop');
       expect(changes).toEqual([{ id: '1', shopId: 'coop' }]);
       expect(tiles(el, 'To buy')).toEqual([]);
       expect(hiddenText(el)).toBe('2 more for other shops');
@@ -239,6 +240,52 @@ describe('GroceryScreen', () => {
       popup.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click();
       await fixture.whenStable();
       expect(el.querySelector('app-product-popup')).toBeNull();
+    });
+  });
+
+  describe('category from the popup', () => {
+    const categories = [
+      { id: 'bakery', name: 'Bakery' },
+      { id: 'produce', name: 'Produce' },
+    ];
+
+    it('moves the tile to its new category and back to none', async () => {
+      const fixture = TestBed.createComponent(GroceryScreen);
+      fixture.componentRef.setInput('shops', shops);
+      fixture.componentRef.setInput('categories', categories);
+      fixture.componentRef.setInput('items', [
+        { id: '1', name: 'Tomatoes', aisle: 'Bakery', categoryId: 'bakery', status: 'CLASSIFIED' },
+        { id: '2', name: 'Bread', aisle: 'Bakery', categoryId: 'bakery', status: 'CLASSIFIED' },
+      ]);
+      await fixture.whenStable();
+      const el = fixture.nativeElement as HTMLElement;
+      const changes: unknown[] = [];
+      fixture.componentInstance.categoryChange.subscribe((c) => changes.push(c));
+      // Migros orders [Produce, Bakery]
+      expect(tiles(el, 'To buy')).toEqual(['Bread', 'Tomatoes']);
+
+      el.querySelector('[aria-label="Tomatoes, Bakery, tap twice to mark as bought"]')!
+        .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+      await fixture.whenStable();
+      const select = el.querySelector<HTMLSelectElement>('app-product-popup select[aria-label="Category"]')!;
+      expect(select.value).toBe('bakery');
+      const pick = async (id: string) => {
+        select.value = id;
+        select.dispatchEvent(new Event('change'));
+        await fixture.whenStable();
+      };
+
+      await pick('produce');
+      expect(tiles(el, 'To buy')).toEqual(['Tomatoes', 'Bread']);
+      expect(el.querySelector('[aria-label="Tomatoes, Produce, tap twice to mark as bought"] .cat')!.textContent).toBe('Produce');
+
+      await pick('');
+      expect(tiles(el, 'To buy')).toEqual(['Bread', 'Tomatoes']);
+      expect(el.querySelector('[aria-label="Tomatoes, no category, tap twice to mark as bought"] .cat')!.textContent).toBe('No category');
+      expect(changes).toEqual([
+        { id: '1', categoryId: 'produce' },
+        { id: '1', categoryId: null },
+      ]);
     });
   });
 

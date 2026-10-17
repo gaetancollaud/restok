@@ -30,8 +30,8 @@ quarkus:
       chat-model:
         model-name: ${OPENROUTER_MODEL:openrouter/auto}
       timeout: ${OPENROUTER_TIMEOUT:60s}
-      log-requests: true
-      log-responses: true
+      log-requests: false
+      log-responses: false
 
   # Observability: OpenTelemetry metrics (HTTP server + JVM) and traces over OTLP.
   # Set OTEL_EXPORTER_OTLP_ENDPOINT in prod; OTEL_SDK_DISABLED=true turns export off. No collector needed in dev/test.

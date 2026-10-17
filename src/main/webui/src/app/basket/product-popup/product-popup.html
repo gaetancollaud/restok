@@ -8,11 +8,22 @@
         </svg>
       </button>
     </header>
-    <p class="cat" [class.pending]="item().status === 'PENDING'">{{ categoryText() }}</p>
-    <h3 class="section">Buy only at</h3>
+    @if (item().status === 'PENDING') {
+      <p class="cat pending">Sorting into a category…</p>
+    }
     @if (local()) {
       <p class="hint">Saving the product… try again in a moment.</p>
     } @else {
+      <h3 class="section">Category</h3>
+      <!-- ponytail: ShopSelect fits any { id, name } list -->
+      <app-shop-select
+        [shops]="categories()"
+        [value]="item().categoryId ?? ''"
+        emptyLabel="No category"
+        label="Category"
+        (valueChange)="categoryChange.emit($event || null)"
+      />
+      <h3 class="section">Buy only at</h3>
       <app-shop-select
         [shops]="shops()"
         [value]="item().shopId ?? ''"

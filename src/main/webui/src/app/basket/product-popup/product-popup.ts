@@ -1,8 +1,8 @@
 import { afterNextRender, Component, computed, ElementRef, input, output, viewChild } from '@angular/core';
-import { Item, Shop } from '../basket';
+import { Category, Item, Shop } from '../basket';
 import { ShopSelect } from '../shop-select/shop-select';
 
-/** A product's details in a modal, with the shop it may be bought at. Shown on render; emits closed when dismissed. */
+/** A product's details in a modal, with its category and the shop it may be bought at. Shown on render; emits closed when dismissed. */
 @Component({
   selector: 'app-product-popup',
   imports: [ShopSelect],
@@ -12,6 +12,9 @@ import { ShopSelect } from '../shop-select/shop-select';
 export class ProductPopup {
   readonly item = input.required<Item>();
   readonly shops = input.required<Shop[]>();
+  readonly categories = input<Category[]>([]);
+  /** The category picked by hand, or null for none. */
+  readonly categoryChange = output<string | null>();
   /** The only shop to buy it at, or null for any shop. */
   readonly shopChange = output<string | null>();
   /** Closed by the button, Escape or the backdrop. */
@@ -21,17 +24,6 @@ export class ProductPopup {
 
   /** Not saved yet: a just-added item keeps its local id until the list is refetched. */
   protected readonly local = computed(() => this.item().id.startsWith('n'));
-  protected readonly categoryText = computed(() => {
-    switch (this.item().status) {
-      case 'CLASSIFIED':
-        return this.item().aisle ?? 'Has a category';
-      case 'PENDING':
-        return 'Sorting into a category…';
-      default:
-        return 'No category';
-    }
-  });
-
   constructor() {
     // Native modal: focus trap, Escape and backdrop for free
     afterNextRender(() => this.dialog().nativeElement.showModal());

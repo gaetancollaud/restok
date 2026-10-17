@@ -6,6 +6,7 @@ import {
   AddShopDocument,
   GroceryDocument,
   SetProductBoughtDocument,
+  SetProductCategoryDocument,
   SetProductShopDocument,
   SetShopCategoryOrderDocument,
   UpdateShopDocument,
@@ -90,7 +91,7 @@ describe('Grocery', () => {
     el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!
       .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
     await fixture.whenStable();
-    const select = el.querySelector<HTMLSelectElement>('app-product-popup select')!;
+    const select = el.querySelector<HTMLSelectElement>('app-product-popup select[aria-label="Buy only at"]')!;
     const pick = async (value: string, shop: unknown) => {
       select.value = value;
       select.dispatchEvent(new Event('change'));
@@ -106,6 +107,31 @@ describe('Grocery', () => {
 
     await pick('', null);
     expect(toBuy(el)).toEqual(['baguette', 'apple']);
+  });
+
+  it('sets a product category from its popup, and clears it', async () => {
+    const fixture = await render();
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!
+      .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+    await fixture.whenStable();
+    const select = el.querySelector<HTMLSelectElement>('app-product-popup select[aria-label="Category"]')!;
+    expect(select.value).toBe('Fruits');
+    const pick = async (value: string, cat: unknown, classification: string) => {
+      select.value = value;
+      select.dispatchEvent(new Event('change'));
+      const op = controller.expectOne(SetProductCategoryDocument);
+      expect(op.operation.variables).toEqual({ id: '1', categoryId: value || null });
+      op.flush({ data: { setProductCategory: { __typename: 'Product', id: '1', classification, category: cat } } });
+      await fixture.whenStable();
+    };
+
+    await pick('Pain', category('Pain'), 'CLASSIFIED');
+    expect(el.querySelector('[aria-label="apple, Pain, tap twice to mark as bought"]')).not.toBeNull();
+
+    await pick('', null, 'UNCLASSIFIED');
+    expect(toBuy(el)).toEqual(['baguette', 'apple']);
+    expect(el.querySelector('[aria-label="apple, no category, tap twice to mark as bought"]')).not.toBeNull();
   });
 
   it('adds a new product and refetches', async () => {

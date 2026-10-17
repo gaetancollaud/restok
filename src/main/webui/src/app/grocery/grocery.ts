@@ -12,6 +12,7 @@ import {
   GroceryGQL,
   GroceryQuery,
   SetProductBoughtGQL,
+  SetProductCategoryGQL,
   SetProductShopGQL,
   SetShopCategoryOrderGQL,
   UpdateShopGQL,
@@ -28,6 +29,7 @@ export class Grocery {
   private readonly addGql = inject(AddProductGQL);
   private readonly boughtGql = inject(SetProductBoughtGQL);
   private readonly productShopGql = inject(SetProductShopGQL);
+  private readonly productCategoryGql = inject(SetProductCategoryGQL);
   private readonly addShopGql = inject(AddShopGQL);
   private readonly updateShopGql = inject(UpdateShopGQL);
   private readonly deleteShopGql = inject(DeleteShopGQL);
@@ -52,12 +54,14 @@ export class Grocery {
       id: p.id,
       name: p.name,
       aisle: p.category?.name,
+      categoryId: p.category?.id,
       status: p.classification,
       bought: p.bought,
       boughtAt: p.boughtAt ? Date.parse(p.boughtAt) : undefined,
       shopId: p.shop?.id,
     })),
   );
+  protected readonly categories = computed(() => this.data()?.categories ?? []);
   protected readonly error = signal<string | null>(null);
   protected readonly panel = signal<'list' | 'shops'>('list');
   /** Shared by both panels; empty means the first shop. */
@@ -83,6 +87,10 @@ export class Grocery {
 
   protected setProductShop(change: { id: string; shopId: string | null }): void {
     this.run(this.productShopGql.mutate({ variables: change }));
+  }
+
+  protected setProductCategory(change: { id: string; categoryId: string | null }): void {
+    this.run(this.productCategoryGql.mutate({ variables: change }));
   }
 
   protected add(name: string): void {

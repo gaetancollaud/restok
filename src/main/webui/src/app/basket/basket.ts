@@ -12,6 +12,8 @@ export interface Shop {
   aisles?: string[];
 }
 
+export type Category = { id: string; name: string };
+
 export interface Item {
   id: string;
   /** Short noun in sentence case, e.g. "Tomatoes". */
@@ -20,6 +22,7 @@ export interface Item {
   meta?: string;
   /** The category; matches one of a shop's aisles. */
   aisle?: string;
+  categoryId?: string;
   status?: ClassificationStatus;
   bought?: boolean;
   /** When it was marked bought, in ms. */

@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { Pwa } from '../../pwa/pwa';
 import { AddBar } from '../add-bar/add-bar';
-import { ALL_SHOPS, boughtList, findShop, hiddenFor, Item, orderFor, Shop } from '../basket';
+import { ALL_SHOPS, boughtList, Category, findShop, hiddenFor, Item, orderFor, Shop } from '../basket';
 import { ItemGrid } from '../item-grid/item-grid';
 import { ItemTile } from '../item-tile/item-tile';
 import { ProductPopup } from '../product-popup/product-popup';
@@ -30,6 +30,8 @@ import { ShopSelect } from '../shop-select/shop-select';
 export class GroceryScreen {
   readonly shops = input.required<Shop[]>();
   readonly items = input.required<Item[]>();
+  /** For the product popup's category dropdown. */
+  readonly categories = input<Category[]>([]);
   /** Selected shop id, or ALL_SHOPS; the first shop when unset or gone. */
   readonly shopId = model('');
   /**
@@ -46,6 +48,8 @@ export class GroceryScreen {
   readonly added = output<string>();
   /** An item restricted to a shop, or to any shop (null). */
   readonly shopChange = output<{ id: string; shopId: string | null }>();
+  /** An item's category picked by hand, or cleared (null). */
+  readonly categoryChange = output<{ id: string; categoryId: string | null }>();
 
   /** Undefined for All shops. */
   protected readonly shop = computed(() =>
@@ -72,6 +76,18 @@ export class GroceryScreen {
       items.map((x) => (x.id === id ? { ...x, shopId: shopId ?? undefined } : x)),
     );
     this.shopChange.emit({ id, shopId });
+  }
+
+  protected setCategory(id: string, categoryId: string | null): void {
+    const name = this.categories().find((c) => c.id === categoryId)?.name;
+    this.state.update((items) =>
+      items.map((x) =>
+        x.id === id
+          ? { ...x, categoryId: categoryId ?? undefined, aisle: name, status: categoryId ? 'CLASSIFIED' : 'UNCLASSIFIED' }
+          : x,
+      ),
+    );
+    this.categoryChange.emit({ id, categoryId });
   }
 
   protected setBought(id: string, bought: boolean): void {

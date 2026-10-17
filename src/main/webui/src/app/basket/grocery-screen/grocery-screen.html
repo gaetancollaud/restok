@@ -63,7 +63,9 @@
   <app-product-popup
     [item]="item"
     [shops]="shops()"
+    [categories]="categories()"
     (shopChange)="setShop(item.id, $event)"
+    (categoryChange)="setCategory(item.id, $event)"
     (closed)="selectedId.set(null)"
   />
 }

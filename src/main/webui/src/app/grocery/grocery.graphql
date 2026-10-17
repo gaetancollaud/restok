@@ -43,6 +43,17 @@ mutation SetProductBought($id: String!, $bought: Boolean!) {
   }
 }
 
+mutation SetProductCategory($id: String!, $categoryId: String) {
+  setProductCategory(id: $id, categoryId: $categoryId) {
+    id
+    classification
+    category {
+      id
+      name
+    }
+  }
+}
+
 mutation SetProductShop($id: String!, $shopId: String) {
   setProductShop(id: $id, shopId: $shopId) {
     id
