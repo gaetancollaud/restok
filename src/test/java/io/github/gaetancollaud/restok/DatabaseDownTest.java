@@ -21,7 +21,6 @@ class DatabaseDownTest {
             return Map.of(
                     "quarkus.datasource.devservices.enabled", "false",
                     "quarkus.datasource.jdbc.url", "jdbc:postgresql://localhost:1/none",
-                    "quarkus.datasource.reactive.url", "postgresql://localhost:1/none",
                     "quarkus.datasource.username", "none",
                     "quarkus.datasource.password", "none",
                     "quarkus.flyway.migrate-at-start", "false",

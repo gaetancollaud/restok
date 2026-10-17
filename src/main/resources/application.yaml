@@ -1,0 +1,92 @@
+quarkus:
+  # Database over JDBC (Hibernate ORM and Flyway). URL and credentials come from env in prod
+  # (QUARKUS_DATASOURCE_JDBC_URL, QUARKUS_DATASOURCE_USERNAME, QUARKUS_DATASOURCE_PASSWORD); Dev Services provide them in dev/test.
+  datasource:
+    db-kind: postgresql
+  flyway:
+    migrate-at-start: true
+  hibernate-orm:
+    schema-management:
+      strategy: validate
+
+  # Angular SPA (src/main/webui), built and served by Quinoa from the same origin
+  quinoa:
+    build-dir: dist/restok/browser
+    package-manager-install:
+      ~: true
+      node-version: 24.21.0
+    enable-spa-routing: true
+    dev-server:
+      port: 4200
+
+  # OpenRouter (OpenAI-compatible). Without OPENROUTER_API_KEY the app still starts; calls then fail upstream (401).
+  langchain4j:
+    openai:
+      base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+      api-key: ${OPENROUTER_API_KEY:not-configured}
+      chat-model:
+        model-name: ${OPENROUTER_MODEL:openrouter/auto}
+      timeout: ${OPENROUTER_TIMEOUT:60s}
+      log-requests: false
+      log-responses: false
+
+  # Observability: OpenTelemetry metrics (HTTP server + JVM) and traces over OTLP.
+  # Set OTEL_EXPORTER_OTLP_ENDPOINT in prod; OTEL_SDK_DISABLED=true turns export off. No collector needed in dev/test.
+  otel:
+    metrics:
+      enabled: true
+    exporter:
+      otlp:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
+    sdk:
+      disabled: ${OTEL_SDK_DISABLED:false}
+  # No Grafana LGTM Dev Service container in dev
+  observability:
+    enabled: false
+
+  # Graceful shutdown: readiness goes DOWN first, then in-flight requests get up to 20s to finish
+  shutdown:
+    delay-enabled: true
+    delay: 5s
+    timeout: 20s
+
+  # Native build (-Dnative): inside the Mandrel JDK 25 builder container, no local GraalVM needed
+  native:
+    container-build: true
+    builder-image: quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25
+
+  # Container image (Jib): native executable on the UBI 9 micro base, non-root
+  container-image:
+    registry: ghcr.io
+    group: gaetancollaud
+    name: restok
+  jib:
+    base-native-image: quay.io/quarkus/ubi9-quarkus-micro-image:2.0
+    user: 1001
+
+"%dev,test":
+  quarkus:
+    otel:
+      sdk:
+        disabled: true
+    # Logs: one JSON object per line on stdout in prod, plain text in dev/test
+    log:
+      console:
+        json:
+          enabled: false
+
+"%test":
+  quarkus:
+    # Backend tests don't need the SPA; JVM/native packaging and dev mode build it
+    quinoa:
+      enabled: false
+    langchain4j:
+      openai:
+        base-url: http://localhost:${quarkus.wiremock.devservices.port}/v1
+        api-key: sk-or-test-0123456789abcdefghijklmnopqrstuvwxyz
+        chat-model:
+          model-name: test/model
+        timeout: 2s
+        max-retries: 1
+    shutdown:
+      delay: 0s

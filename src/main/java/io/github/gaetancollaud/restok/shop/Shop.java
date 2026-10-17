@@ -1,4 +1,4 @@
-package io.github.gaetancollaud.restok.item;
+package io.github.gaetancollaud.restok.shop;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,7 +9,7 @@ import org.eclipse.microprofile.graphql.NonNull;
 import java.util.UUID;
 
 @Entity
-public class Item {
+public class Shop {
 
     @Id
     @NonNull
@@ -19,4 +19,10 @@ public class Item {
     @NonNull
     @Column(nullable = false, columnDefinition = "text")
     public String name;
+
+    @Column(nullable = false)
+    public double latitude;
+
+    @Column(nullable = false)
+    public double longitude;
 }

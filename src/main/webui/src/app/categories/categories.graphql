@@ -1,0 +1,24 @@
+query Categories {
+  categories {
+    id
+    name
+  }
+}
+
+mutation AddCategory($name: String!) {
+  addCategory(name: $name) {
+    id
+    name
+  }
+}
+
+mutation RenameCategory($id: String!, $name: String!) {
+  renameCategory(id: $id, name: $name) {
+    id
+    name
+  }
+}
+
+mutation DeleteCategory($id: String!) {
+  deleteCategory(id: $id)
+}

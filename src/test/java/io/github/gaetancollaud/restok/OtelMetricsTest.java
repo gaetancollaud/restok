@@ -39,7 +39,7 @@ class OtelMetricsTest {
     @Test
     void httpServerMetricsAreExported() throws InterruptedException {
         wiremock.register(post(urlMatching("/v1/.*")).willReturn(ok()));
-        GraphQL.post("{ items { id } }");
+        GraphQL.post("{ categories { id } }");
         var exported = postRequestedFor(urlEqualTo("/v1/metrics")).withRequestBody(containing("http.server.request.duration"));
         for (int i = 0; i < 20; i++) {
             if (!wiremock.find(exported).isEmpty()) {

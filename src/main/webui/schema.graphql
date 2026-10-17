@@ -1,14 +1,48 @@
-type Item {
+"Mutation root"
+type Mutation {
+  addCategory(name: String!): ProductCategory!
+  addProduct(name: String!): Product!
+  addShop(latitude: Float!, longitude: Float!, name: String!): Shop!
+  deleteCategory(id: String!): String!
+  deleteProduct(id: String!): String!
+  deleteShop(id: String!): String!
+  renameCategory(id: String!, name: String!): ProductCategory!
+  setProductBought(bought: Boolean!, id: String!): Product!
+  setProductCategory(categoryId: String, id: String!): Product!
+  setShopCategoryOrder(categoryIds: [String!]!, shopId: String!): Shop!
+  updateShop(id: String!, latitude: Float!, longitude: Float!, name: String!): Shop!
+}
+
+type Product {
+  bought: Boolean!
+  category: ProductCategory
+  classification: ProductClassification!
   id: String!
   name: String!
 }
 
-"Mutation root"
-type Mutation {
-  addItem(name: String!): Item!
+type ProductCategory {
+  id: String!
+  name: String!
 }
 
 "Query root"
 type Query {
-  items: [Item!]!
+  categories: [ProductCategory!]!
+  products(shopId: String): [Product!]!
+  shops: [Shop!]!
+}
+
+type Shop {
+  categoryOrder: [ProductCategory!]!
+  id: String!
+  latitude: Float!
+  longitude: Float!
+  name: String!
+}
+
+enum ProductClassification {
+  CLASSIFIED
+  PENDING
+  UNCLASSIFIED
 }

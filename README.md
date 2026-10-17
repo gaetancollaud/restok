@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/gaetancollaud/restok/actions/workflows/ci.yml/badge.svg)](https://github.com/gaetancollaud/restok/actions/workflows/ci.yml)
 
-Quarkus (Java 25, reactive) + PostgreSQL + GraphQL + Angular, shipped as a native image to Kubernetes.
+Quarkus (Java 25) + PostgreSQL + GraphQL + Angular, shipped as a native image to Kubernetes.
 
 ## Prerequisites
 
@@ -33,8 +33,7 @@ All environment-specific values come from environment variables (Dev Services co
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `QUARKUS_DATASOURCE_REACTIVE_URL` | App database, e.g. `postgresql://host:5432/restok` | — |
-| `QUARKUS_DATASOURCE_JDBC_URL` | Same database for Flyway, e.g. `jdbc:postgresql://host:5432/restok` | — |
+| `QUARKUS_DATASOURCE_JDBC_URL` | App database, e.g. `jdbc:postgresql://host:5432/restok` | — |
 | `QUARKUS_DATASOURCE_USERNAME` / `QUARKUS_DATASOURCE_PASSWORD` | Database credentials (password from a Secret) | — |
 | `OPENROUTER_API_KEY` | OpenRouter API key (Secret). App starts without it; AI calls then fail | `not-configured` |
 | `OPENROUTER_MODEL` | Model id, see https://openrouter.ai/models | `openrouter/auto` |
@@ -54,11 +53,11 @@ All environment-specific values come from environment variables (Dev Services co
 - Entities are plain `@Entity` classes (no Panache active record).
 - Each entity has one `@ApplicationScoped` repository implementing `PanacheRepositoryBase<Entity, ID>`.
 
-### Reactive only
+### Blocking only
 
-- No blocking code in main sources: no `@Blocking`, no `.await().indefinitely()`, no blocking clients.
-- GraphQL resolvers return `Uni`/`Multi` and use `@WithSession` (reads) or `@WithTransaction` (writes).
-- Flyway (JDBC) is the only blocking component, and it runs once at startup before HTTP traffic is accepted.
+- No reactive code in main sources: no `Uni`/`Multi`, no Mutiny, no Hibernate Reactive, no reactive clients.
+- Persistence is Hibernate ORM with Panache over JDBC. GraphQL resolvers return plain types and run on worker threads; writes use `@Transactional`.
+- AI services (`@RegisterAiService`) return `String` and block until the answer arrives.
 
 ## Deploy to Kubernetes
 

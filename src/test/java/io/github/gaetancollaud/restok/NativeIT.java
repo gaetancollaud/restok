@@ -17,18 +17,18 @@ import static org.hamcrest.Matchers.nullValue;
 class NativeIT {
 
     @Test
-    void addAndListItems() {
-        post("mutation($name: String!) { addItem(name: $name) { id name } }", Map.of("name", " native "))
+    void addAndListCategories() {
+        post("mutation($name: String!) { addCategory(name: $name) { id name } }", Map.of("name", " native "))
                 .body("errors", nullValue())
-                .body("data.addItem.name", is("native"));
-        post("{ items { name } }").body("data.items.name", hasItem("native"));
-        post("mutation { addItem(name: \" \") { id } }").body("errors[0].message", is("name must not be blank"));
+                .body("data.addCategory.name", is("native"));
+        post("{ categories { name } }").body("data.categories.name", hasItem("native"));
+        post("mutation { addCategory(name: \" \") { id } }").body("errors[0].message", is("name must not be blank"));
     }
 
     @Test
     void servesSpaWithRouteFallback() {
         given().get("/").then().statusCode(200).body(containsString("<app-root"));
-        given().get("/items").then().statusCode(200).body(containsString("<app-root"));
+        given().get("/categories").then().statusCode(200).body(containsString("<app-root"));
     }
 
     @Test

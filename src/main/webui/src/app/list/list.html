@@ -1,0 +1,43 @@
+<h2>Shopping list</h2>
+<select aria-label="Shop" (change)="selectShop($any($event.target).value)">
+  <option value="">All, by name</option>
+  @for (shop of shops(); track shop.id) {
+    <option [value]="shop.id">{{ shop.name }}</option>
+  }
+</select>
+<form (submit)="$event.preventDefault(); add(name)">
+  <input #name aria-label="Product name" placeholder="Product name" required />
+  <button type="submit">Add</button>
+</form>
+@if (error()) {
+  <p role="alert">{{ error() }}</p>
+}
+<ul>
+  @for (product of products(); track product.id) {
+    <li>
+      <label [class.bought]="product.bought">
+        <input
+          type="checkbox"
+          [checked]="product.bought"
+          (change)="setBought(product, $any($event.target).checked)"
+        />
+        {{ product.name }}
+      </label>
+      @if (product.classification === pending) {
+        <em>pending</em>
+      }
+      <select
+        [attr.aria-label]="'Category of ' + product.name"
+        (change)="setCategory(product, $any($event.target).value)"
+      >
+        <option value="" [selected]="!product.category">No category</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id" [selected]="category.id === product.category?.id">
+            {{ category.name }}
+          </option>
+        }
+      </select>
+      <button type="button" (click)="remove(product)">Delete</button>
+    </li>
+  }
+</ul>

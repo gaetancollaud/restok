@@ -1,12 +1,10 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 @Component({
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RouterLink],
   selector: 'app-root',
-  template: `
-    <h1>restok</h1>
-    <router-outlet />
-  `,
+  templateUrl: './app.html',
+  styleUrl: './app.css',
 })
 export class App {}

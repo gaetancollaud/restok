@@ -8,7 +8,6 @@ import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -46,7 +45,7 @@ class AiChatLoggingTest {
     @Test
     void apiKeyIsNotLogged() {
         wiremock.register(post(urlEqualTo("/v1/chat/completions")).willReturn(aResponse()
-                .withHeader("Content-Type", "text/event-stream").withBody(AiChatTest.SSE)));
+                .withHeader("Content-Type", "application/json").withBody(AiChatTest.completion("Hello"))));
         List<String> logged = new CopyOnWriteArrayList<>();
         Handler handler = new Handler() {
             @Override
@@ -67,7 +66,7 @@ class AiChatLoggingTest {
         };
         Logger.getLogger("").addHandler(handler);
         try {
-            aiChat.chat("hi").collect().asList().await().atMost(Duration.ofSeconds(5));
+            aiChat.chat("hi");
         } finally {
             Logger.getLogger("").removeHandler(handler);
         }

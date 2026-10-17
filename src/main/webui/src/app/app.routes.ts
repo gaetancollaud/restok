@@ -1,7 +1,11 @@
 import { Routes } from '@angular/router';
-import { Items } from './items/items';
+import { Categories } from './categories/categories';
+import { List } from './list/list';
+import { Shops } from './shops/shops';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'items' },
-  { path: 'items', component: Items },
+  { path: '', pathMatch: 'full', redirectTo: 'list' },
+  { path: 'list', component: List },
+  { path: 'shops', component: Shops },
+  { path: 'categories', component: Categories },
 ];

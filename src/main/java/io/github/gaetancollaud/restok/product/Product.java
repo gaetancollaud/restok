@@ -1,0 +1,40 @@
+package io.github.gaetancollaud.restok.product;
+
+import io.github.gaetancollaud.restok.category.ProductCategory;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import org.eclipse.microprofile.graphql.NonNull;
+
+import java.util.UUID;
+
+@Entity
+public class Product {
+
+    @Id
+    @NonNull
+    @GeneratedValue
+    public UUID id;
+
+    @NonNull
+    @Column(nullable = false, columnDefinition = "text")
+    public String name;
+
+    @Column(nullable = false)
+    public boolean bought;
+
+    /** Null when uncategorized. Eager: GraphQL serializes it after the session is gone. */
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    public ProductCategory category;
+
+    @NonNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "text")
+    public ProductClassification classification;
+}
