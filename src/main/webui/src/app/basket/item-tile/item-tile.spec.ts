@@ -55,4 +55,36 @@ describe('ItemTile', () => {
     button.click();
     expect(events).toEqual(['longPress', 'press']);
   });
+
+  describe('sale badge', () => {
+    function renderSale(variant: 'tobuy' | 'bought', sale?: string) {
+      const fixture = TestBed.createComponent(ItemTile);
+      fixture.componentRef.setInput('name', 'salade');
+      fixture.componentRef.setInput('variant', variant);
+      fixture.componentRef.setInput('status', 'CLASSIFIED');
+      fixture.componentRef.setInput('category', 'Légumes');
+      fixture.componentRef.setInput('sale', sale);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      return { badge: el.querySelector('.sale'), label: el.querySelector('button')!.getAttribute('aria-label') };
+    }
+
+    it('shows the sale on a To-buy tile and names it in the label', () => {
+      const { badge, label } = renderSale('tobuy', 'Migros Hit');
+      expect(badge!.textContent!.trim()).toBe('Migros Hit');
+      expect(label).toBe('salade, Légumes, on sale at Migros Hit, tap twice to mark as bought');
+    });
+
+    it('shows no sale on a Bought tile', () => {
+      const { badge, label } = renderSale('bought', 'Migros Hit');
+      expect(badge).toBeNull();
+      expect(label).toBe('Add salade again, Légumes');
+    });
+
+    it('shows no badge without a sale', () => {
+      const { badge, label } = renderSale('tobuy');
+      expect(badge).toBeNull();
+      expect(label).toBe('salade, Légumes, tap twice to mark as bought');
+    });
+  });
 });

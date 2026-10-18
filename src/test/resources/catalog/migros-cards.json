@@ -1,0 +1,30 @@
+[
+  {
+    "uid": 100006357,
+    "name": "Lait entier",
+    "title": "Lait entier · Bio, 3.5% de matières grasses, pasteurisé",
+    "description": "Lait entier · Bio, 3.5% de matières grasses, pasteurisé",
+    "productUrls": "https://www.migros.ch/fr/product/204003200000",
+    "offer": {
+      "quantity": "1l",
+      "price": {"advertisedValue": 1.9, "effectiveValue": 1.9},
+      "badges": [],
+      "promotionPrice": null,
+      "promotionDateRange": null
+    }
+  },
+  {
+    "uid": 100068039,
+    "name": "Kopfsalat",
+    "title": "Laitue pommée · XL",
+    "description": "Laitue pommée · XL",
+    "productUrls": "https://www.migros.ch/fr/product/131043300000",
+    "offer": {
+      "quantity": "350g",
+      "price": {"advertisedValue": 2.95, "effectiveValue": 2.95},
+      "badges": [{"description": "Hit"}],
+      "promotionPrice": {"advertisedValue": 2.95, "effectiveValue": 2.95},
+      "promotionDateRange": {"startDate": "2026-10-15", "endDate": "2026-10-21"}
+    }
+  }
+]

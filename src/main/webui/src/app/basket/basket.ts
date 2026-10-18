@@ -31,6 +31,47 @@ export interface Item {
   boughtAt?: number;
   /** The only shop to buy it at; unset means any shop. */
   shopId?: string;
+  /** Its links to chain products, in chain order. */
+  links?: ProductLink[];
+}
+
+export type Chain = 'MIGROS' | 'COOP' | 'ALDI' | 'LIDL';
+
+/** The chains in display order. */
+export const CHAINS: { id: Chain; name: string }[] = [
+  { id: 'MIGROS', name: 'Migros' },
+  { id: 'COOP', name: 'Coop' },
+  { id: 'ALDI', name: 'Aldi' },
+  { id: 'LIDL', name: 'Lidl' },
+];
+
+export const chainName = (chain: Chain) => CHAINS.find((c) => c.id === chain)?.name ?? chain;
+
+/** A chain's product as the chain reports it now; null fields are ones the chain doesn't give. */
+export interface ChainProduct {
+  chain: Chain;
+  code: string;
+  name: string;
+  description: string | null;
+  quantity: string | null;
+  /** Regular price in CHF. */
+  price: number;
+  url: string | null;
+  /** Null when not on sale today. endDate is an ISO date, null when the chain doesn't say. */
+  sale: { label: string; price: number; endDate: string | null } | null;
+}
+
+/** product is null when the chain doesn't know the code anymore or can't be reached. */
+export interface ProductLink {
+  chain: Chain;
+  code: string;
+  product: ChainProduct | null;
+}
+
+/** The first linked product on sale, in chain order, as "Migros Hit". */
+export function firstSale(item: Item): string | undefined {
+  const link = item.links?.find((l) => l.product?.sale);
+  return link && `${chainName(link.chain)} ${link.product!.sale!.label}`;
 }
 
 /** The shopId value for the "All shops" view: no shop filter, sorted by name. */
@@ -66,7 +107,8 @@ export function nearestShop(shops: Shop[], latitude: number, longitude: number):
 }
 
 /** Still to buy, but only at another shop than this one. Never without a shop (All shops). */
-const elsewhere = (item: Item, shop?: Shop) => !!shop && !item.bought && !!item.shopId && item.shopId !== shop.id;
+const elsewhere = (item: Item, shop?: Shop) =>
+  !!shop && !item.bought && !!item.shopId && item.shopId !== shop.id;
 
 /** How many items to buy are left out of the list because they belong to another shop. */
 export function hiddenFor(items: Item[], shop?: Shop): number {

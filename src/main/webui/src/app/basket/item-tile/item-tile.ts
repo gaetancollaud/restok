@@ -21,6 +21,8 @@ export class ItemTile {
   readonly status = input<ClassificationStatus>();
   /** The category name, for the dot's tooltip and the accessible label when classified. */
   readonly category = input<string>();
+  /** A sale of a linked chain product, e.g. "Migros Hit"; shown as a badge on To-buy tiles only. */
+  readonly sale = input<string>();
   /** To-buy tiles emit on a second tap within DOUBLE_TAP_MS, so a stray tap doesn't buy; Bought tiles on every tap. */
   readonly press = output<void>();
   /** A long press, right click or menu key: open the product details. Never also emits press. */
@@ -60,7 +62,10 @@ export class ItemTile {
         return this.category() ?? '';
     }
   });
-  protected readonly hasTop = computed(() => !!(this.categoryText() || this.status() || this.bought()));
+  protected readonly saleText = computed(() => (this.bought() ? '' : (this.sale() ?? '')));
+  protected readonly hasTop = computed(
+    () => !!(this.categoryText() || this.saleText() || this.status() || this.bought()),
+  );
   protected readonly dotTitle = computed(() => {
     switch (this.status()) {
       case 'CLASSIFIED':
@@ -113,8 +118,9 @@ export class ItemTile {
 
   protected readonly ariaLabel = computed(() => {
     const state = this.state() ? ', ' + this.state() : '';
+    const sale = this.saleText() ? ', on sale at ' + this.saleText() : '';
     return this.bought()
       ? `Add ${this.name()} again${state}`
-      : `${this.name()}${this.meta() ? ', ' + this.meta() : ''}${state}, tap twice to mark as bought`;
+      : `${this.name()}${this.meta() ? ', ' + this.meta() : ''}${state}${sale}, tap twice to mark as bought`;
   });
 }

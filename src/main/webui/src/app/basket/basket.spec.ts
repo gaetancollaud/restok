@@ -1,9 +1,14 @@
-import { boughtList, hiddenFor, Item, nearestShop, orderFor } from './basket';
+import { boughtList, firstSale, hiddenFor, Item, nearestShop, orderFor } from './basket';
 
 describe('basket', () => {
   describe('nearestShop', () => {
     // 0.0009° of latitude is about 100 m
-    const at = (id: string, meters: number) => ({ id, name: id, latitude: 46.5 + (meters / 100) * 0.0009, longitude: 6.6 });
+    const at = (id: string, meters: number) => ({
+      id,
+      name: id,
+      latitude: 46.5 + (meters / 100) * 0.0009,
+      longitude: 6.6,
+    });
 
     it('picks a shop within 200 m', () => {
       expect(nearestShop([at('coop', 50)], 46.5, 6.6)?.id).toBe('coop');
@@ -18,7 +23,9 @@ describe('basket', () => {
     });
 
     it('ignores shops without a location', () => {
-      expect(nearestShop([{ id: 'lidl', name: 'Lidl' }, at('coop', 50)], 46.5, 6.6)?.id).toBe('coop');
+      expect(nearestShop([{ id: 'lidl', name: 'Lidl' }, at('coop', 50)], 46.5, 6.6)?.id).toBe(
+        'coop',
+      );
     });
   });
 
@@ -71,6 +78,28 @@ describe('basket', () => {
 
     it('keeps every bought item in Bought', () => {
       expect(names(boughtList(restricted))).toEqual(['Coffee']);
+    });
+  });
+
+  describe('firstSale', () => {
+    const salad = { chain: 'MIGROS' as const, code: '100068039', name: 'Kopfsalat', description: 'Laitue pommée · XL', quantity: '350g', price: 2.95, url: 'https://www.migros.ch/fr/product/131043300000', sale: { label: 'Hit', price: 2.95, endDate: '2026-10-21' } };
+    it('names the chain and label of the first linked product on sale, in chain order', () => {
+      const coop = { ...salad, chain: 'COOP' as const, sale: { label: '22%', price: 2, endDate: null } };
+      const item: Item = {
+        id: '1',
+        name: 'salade',
+        links: [
+          { chain: 'MIGROS', code: '1', product: { ...salad, sale: null } },
+          { chain: 'COOP', code: '2', product: coop },
+          { chain: 'LIDL', code: '3', product: null },
+        ],
+      };
+      expect(firstSale(item)).toBe('Coop 22%');
+    });
+
+    it('is undefined without a sale or a link', () => {
+      expect(firstSale({ id: '1', name: 'pomme' })).toBeUndefined();
+      expect(firstSale({ id: '1', name: 'pomme', links: [{ chain: 'LIDL', code: '3', product: null }] })).toBeUndefined();
     });
   });
 });

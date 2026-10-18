@@ -1,0 +1,11 @@
+{
+  "data": {
+    "sku": "000000000000319612",
+    "name": "Lait entier, pasteurisé",
+    "description": "Lait entier BIO, min. 3.9% de matières grasses",
+    "sellingSize": "1 l",
+    "urlSlugText": "lait-entier-pasteurise",
+    "urlSlugTextAlternatives": {"fr-CH": "lait-entier-pasteurise"},
+    "price": {"amount": 189, "wasPriceDisplay": null, "savingsDisplay": null}
+  }
+}

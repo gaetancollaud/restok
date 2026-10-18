@@ -1,0 +1,20 @@
+{
+  "meta": {"pagination": {"offset": 0, "limit": 12, "totalCount": 2}},
+  "data": [
+    {
+      "sku": "000000000000319612",
+      "name": "Lait entier, pasteurisé",
+      "sellingSize": "1 l",
+      "urlSlugText": "lait-entier-pasteurise",
+      "urlSlugTextAlternatives": {"de-CH": "vollmilch-pasteurisiert", "fr-CH": "lait-entier-pasteurise"},
+      "price": {"amount": 189, "wasPriceDisplay": null, "savingsDisplay": null}
+    },
+    {
+      "sku": "000000000000107095",
+      "name": "Salanettis, doux",
+      "sellingSize": null,
+      "urlSlugText": "salanettis-doux",
+      "price": {"amount": 359, "wasPriceDisplay": "CHF 3.79", "savingsDisplay": null}
+    }
+  ]
+}

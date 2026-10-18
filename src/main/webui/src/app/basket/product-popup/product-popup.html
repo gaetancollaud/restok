@@ -31,6 +31,73 @@
         label="Buy only at"
         (valueChange)="shopChange.emit($event || null)"
       />
+      <h3 class="section">Prices</h3>
+      @for (link of item().links ?? []; track link.chain) {
+        <section class="link" [attr.aria-label]="chainName(link.chain)">
+          <div class="link-head">
+            <span class="chain">{{ chainName(link.chain) }}</span>
+            <button type="button" class="textbtn" [attr.aria-label]="'Unlink ' + chainName(link.chain)" (click)="unlink(link.chain)">
+              Unlink
+            </button>
+          </div>
+          @if (link.product; as p) {
+            <p class="pname">{{ p.name }}@if (p.quantity) {<span class="muted"> · {{ p.quantity }}</span>}</p>
+            @if (p.description && p.description !== p.name) {
+              <p class="desc">{{ p.description }}</p>
+            }
+            @if (p.sale; as sale) {
+              <p class="price">
+                <span class="badge">{{ sale.label }}</span>
+                {{ chf(sale.price) }}
+                @if (sale.price !== p.price) {
+                  <s class="muted">{{ chf(p.price) }}</s>
+                }
+                @if (sale.endDate) {
+                  <span class="muted">until {{ day(sale.endDate) }}</span>
+                }
+              </p>
+            } @else {
+              <p class="price">{{ chf(p.price) }}</p>
+            }
+            @if (p.url) {
+              <a class="view" [href]="p.url" target="_blank" rel="noopener">View on {{ chainName(link.chain) }}</a>
+            }
+          } @else {
+            <p class="hint">Not available right now</p>
+          }
+        </section>
+      }
+      @if (searchChain()) {
+        <form class="search" (submit)="$event.preventDefault(); search(query.value)">
+          <app-shop-select [shops]="CHAINS" [value]="chain()" label="Chain" (valueChange)="chain.set($any($event))" />
+          <div class="search-row">
+            <input #query class="input" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search products" placeholder="Search a product" />
+            <button type="submit" class="btn">Search</button>
+          </div>
+        </form>
+        @if (searching()) {
+          <p class="hint">Searching…</p>
+        }
+        @if (searchError(); as error) {
+          <p class="hint" role="alert">{{ error }}</p>
+        }
+        @if (results(); as results) {
+          @if (results.length) {
+            <ul class="results" aria-label="Search results">
+              @for (r of results; track r.code) {
+                <li>
+                  <button type="button" class="result" (click)="pick(r)">
+                    <span class="rname">{{ r.name }}</span>
+                    <span class="muted">{{ r.quantity ? r.quantity + ' · ' : '' }}{{ chf(r.sale?.price ?? r.price) }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="hint">No products found</p>
+          }
+        }
+      }
     }
   </div>
 </dialog>

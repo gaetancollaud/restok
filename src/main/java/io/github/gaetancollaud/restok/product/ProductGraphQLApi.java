@@ -1,5 +1,6 @@
 package io.github.gaetancollaud.restok.product;
 
+import io.github.gaetancollaud.restok.catalog.Chain;
 import io.github.gaetancollaud.restok.category.ProductCategory;
 import io.github.gaetancollaud.restok.category.ProductCategoryRepository;
 import io.github.gaetancollaud.restok.shop.ShopRepository;
@@ -94,6 +95,19 @@ public class ProductGraphQLApi {
             return product;
         }
         product.shop = shopRepository.findByIdOptional(shopId).orElseThrow(() -> new GraphQLException("shop not found"));
+        return product;
+    }
+
+    @Mutation("setProductLink")
+    @Transactional
+    public @NonNull Product setProductLink(@NonNull UUID id, @NonNull Chain chain, String code) throws GraphQLException {
+        Product product = find(id);
+        String trimmed = code == null ? "" : code.strip();
+        if (trimmed.isEmpty()) {
+            product.codes.remove(chain);
+        } else {
+            product.codes.put(chain, trimmed);
+        }
         return product;
     }
 

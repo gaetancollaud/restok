@@ -8,12 +8,14 @@
   [items]="items()"
   [categories]="categories()"
   [classify]="serverClassifies"
+  [searchChain]="searchChain"
   [(shopId)]="shopId"
   (editShops)="panel.set('shops')"
   (boughtChange)="setBought($event)"
   (added)="add($event)"
   (shopChange)="setProductShop($event)"
   (categoryChange)="setProductCategory($event)"
+  (linkChange)="setProductLink($event)"
 />
 <app-shop-editor
   [hidden]="panel() !== 'shops'"

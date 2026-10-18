@@ -1,18 +1,20 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
-import { ALL_SHOPS, Item, nearestShop, Shop } from '../basket/basket';
+import { firstValueFrom, forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
+import { ALL_SHOPS, Chain, ChainProduct, Item, nearestShop, Shop } from '../basket/basket';
 import { GroceryScreen } from '../basket/grocery-screen/grocery-screen';
 import { ShopEditor } from '../basket/shop-editor/shop-editor';
 import {
   AddCategoryGQL,
   AddProductGQL,
   AddShopGQL,
+  ChainSearchGQL,
   DeleteShopGQL,
   GroceryGQL,
   GroceryQuery,
   SetProductBoughtGQL,
   SetProductCategoryGQL,
+  SetProductLinkGQL,
   SetProductShopGQL,
   SetShopCategoryOrderGQL,
   UpdateShopGQL,
@@ -35,6 +37,8 @@ export class Grocery {
   private readonly deleteShopGql = inject(DeleteShopGQL);
   private readonly orderGql = inject(SetShopCategoryOrderGQL);
   private readonly addCategoryGql = inject(AddCategoryGQL);
+  private readonly searchGql = inject(ChainSearchGQL);
+  private readonly linkGql = inject(SetProductLinkGQL);
   private readonly groceryRef = inject(GroceryGQL).watch();
 
   private readonly data = toSignal(
@@ -61,6 +65,7 @@ export class Grocery {
       bought: p.bought,
       boughtAt: p.boughtAt ? Date.parse(p.boughtAt) : undefined,
       shopId: p.shop?.id,
+      links: p.links,
     })),
   );
   protected readonly categories = computed(() => this.data()?.categories ?? []);
@@ -113,6 +118,17 @@ export class Grocery {
 
   protected setProductCategory(change: { id: string; categoryId: string | null }): void {
     this.run(this.productCategoryGql.mutate({ variables: change }));
+  }
+
+  /** A chain's products matching the query; rejects with "<Chain> is unavailable" when the chain fails. */
+  protected readonly searchChain = (chain: Chain, query: string): Promise<ChainProduct[]> =>
+    firstValueFrom(
+      this.searchGql.fetch({ variables: { chain, query }, fetchPolicy: 'no-cache' }),
+    ).then((r) => r.data!.chainSearch);
+
+  /** The response carries the product's links, which updates the cached product. */
+  protected setProductLink(change: { id: string; chain: Chain; code: string | null }): void {
+    this.run(this.linkGql.mutate({ variables: change }));
   }
 
   protected add(name: string): void {
@@ -176,7 +192,9 @@ export class Grocery {
   /** Runs a shop edit, then reloads everything so both panels show the saved state. */
   private save<T>(op: Observable<T>, done?: (result: T) => void): void {
     this.run(
-      op.pipe(switchMap((result) => from(this.groceryRef.refetch()).pipe(map(() => done?.(result))))),
+      op.pipe(
+        switchMap((result) => from(this.groceryRef.refetch()).pipe(map(() => done?.(result)))),
+      ),
     );
   }
 

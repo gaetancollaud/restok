@@ -1,0 +1,22 @@
+{
+  "id": "10104656",
+  "title": "Jetzt sparen",
+  "products": [
+    {
+      "id": "10104656_10060322",
+      "title": "Pommes de terre à chair ferme suisses bio",
+      "subtitle": "",
+      "additionalInfo": "",
+      "mainPrice": {"price": 2.19, "oldPrice": 2.85, "discount": "-23%", "symbol": "CHF"},
+      "badges": [{"type": "AvailableInStoreFrom", "title": "15.10. - 21.10."}]
+    },
+    {
+      "id": "10104656_10060400",
+      "title": "Pommes Gala",
+      "subtitle": "1 kg",
+      "additionalInfo": "",
+      "mainPrice": {"price": 3.49, "oldPrice": null, "discount": null, "symbol": "CHF"},
+      "badges": []
+    }
+  ]
+}

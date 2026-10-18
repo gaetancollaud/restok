@@ -17,6 +17,9 @@
       @if (categoryText()) {
         <span class="cat" [class.pending]="status() === 'PENDING'">{{ categoryText() }}</span>
       }
+      @if (saleText()) {
+        <span class="sale">{{ saleText() }}</span>
+      }
       @if (status(); as status) {
         <span class="dot {{ status.toLowerCase() }}" [attr.title]="dotTitle()"></span>
       }

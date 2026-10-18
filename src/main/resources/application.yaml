@@ -83,6 +83,14 @@ quarkus:
     base-native-image: quay.io/quarkus/ubi9-quarkus-micro-image:2.0
     user: 1001
 
+# Supermarket chains' product APIs (unofficial, no login), behind the product links
+restok:
+  catalog:
+    migros-url: https://www.migros.ch
+    coop-url: https://www.coop.ch
+    aldi-url: https://api.aldi-suisse.ch
+    lidl-url: https://digital-leaflet.lidlplus.com
+
 "%dev,test":
   quarkus:
     otel:
@@ -109,3 +117,10 @@ quarkus:
         max-retries: 1
     shutdown:
       delay: 0s
+  # All four chains on WireMock; their paths don't overlap
+  restok:
+    catalog:
+      migros-url: http://localhost:${quarkus.wiremock.devservices.port}
+      coop-url: http://localhost:${quarkus.wiremock.devservices.port}
+      aldi-url: http://localhost:${quarkus.wiremock.devservices.port}
+      lidl-url: http://localhost:${quarkus.wiremock.devservices.port}

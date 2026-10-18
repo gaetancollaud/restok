@@ -1,0 +1,22 @@
+{
+  "products": [
+    {
+      "code": "4446520",
+      "title": "Free From Lait écrémé UHT 1.5% gras sans lactose",
+      "content": "1",
+      "contentUnit": "l",
+      "price": {"currencyIso": "CHF", "value": 2.0},
+      "hasPromotion": false
+    },
+    {
+      "code": "3542161",
+      "title": "Naturaplan Bio Tomates cerises Datterino",
+      "content": "250",
+      "contentUnit": "g",
+      "price": {"currencyIso": "CHF", "value": 2.95},
+      "originalPrice": {"currencyIso": "CHF", "value": 3.8},
+      "listPromotions": ["22%"],
+      "hasPromotion": true
+    }
+  ]
+}

@@ -1,3 +1,18 @@
+type ChainProduct {
+  chain: Chain!
+  "The chain's own product id"
+  code: String!
+  description: String
+  name: String!
+  "Regular price in CHF"
+  price: Float!
+  quantity: String
+  "Null when not on sale today"
+  sale: Sale
+  "Its page on the chain's site"
+  url: String
+}
+
 "Mutation root"
 type Mutation {
   addCategory(name: String!): ProductCategory!
@@ -9,6 +24,7 @@ type Mutation {
   renameCategory(id: String!, name: String!): ProductCategory!
   setProductBought(bought: Boolean!, id: String!): Product!
   setProductCategory(categoryId: String, id: String!): Product!
+  setProductLink(chain: Chain!, code: String, id: String!): Product!
   setProductShop(id: String!, shopId: String): Product!
   setShopCategoryOrder(categoryIds: [String!]!, shopId: String!): Shop!
   updateShop(id: String!, latitude: Float, longitude: Float, name: String!): Shop!
@@ -21,6 +37,8 @@ type Product {
   category: ProductCategory
   classification: ProductClassification!
   id: String!
+  "Its links to chain products, in chain order"
+  links: [ProductLink!]!
   name: String!
   shop: Shop
 }
@@ -30,12 +48,29 @@ type ProductCategory {
   name: String!
 }
 
+type ProductLink {
+  chain: Chain!
+  code: String!
+  "Null when the chain doesn't know the code anymore or can't be reached"
+  product: ChainProduct
+}
+
 "Query root"
 type Query {
   categories: [ProductCategory!]!
+  "Up to 10 of the chain's products matching the query; Lidl searches its current leaflet only"
+  chainSearch(chain: Chain!, query: String!): [ChainProduct!]!
   me: String!
   products(shopId: String): [Product!]!
   shops: [Shop!]!
+}
+
+type Sale {
+  "Last day of the sale; null when the chain doesn't say (ISO-8601)"
+  endDate: Date
+  label: String!
+  "Sale price in CHF"
+  price: Float!
 }
 
 type Shop {
@@ -44,6 +79,13 @@ type Shop {
   latitude: Float
   longitude: Float
   name: String!
+}
+
+enum Chain {
+  ALDI
+  COOP
+  LIDL
+  MIGROS
 }
 
 enum ProductClassification {
@@ -57,6 +99,9 @@ scalar BigDecimal
 
 "Scalar for BigInteger"
 scalar BigInteger
+
+"Scalar for Date"
+scalar Date
 
 "Scalar for DateTime"
 scalar DateTime

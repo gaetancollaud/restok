@@ -10,7 +10,20 @@ import {
 } from '@angular/core';
 import { Pwa } from '../../pwa/pwa';
 import { AddBar } from '../add-bar/add-bar';
-import { ALL_SHOPS, boughtList, Category, findShop, hiddenFor, Item, orderFor, Shop } from '../basket';
+import {
+  ALL_SHOPS,
+  boughtList,
+  Category,
+  Chain,
+  CHAINS,
+  ChainProduct,
+  findShop,
+  firstSale,
+  hiddenFor,
+  Item,
+  orderFor,
+  Shop,
+} from '../basket';
 import { ItemGrid } from '../item-grid/item-grid';
 import { ItemTile } from '../item-tile/item-tile';
 import { ProductPopup } from '../product-popup/product-popup';
@@ -39,6 +52,8 @@ export class GroceryScreen {
    * without it they start UNCLASSIFIED.
    */
   readonly classify = input<(name: string) => Promise<string | null>>();
+  /** A chain's products matching a query, for the product popup's search; no search without it. */
+  readonly searchChain = input<(chain: Chain, query: string) => Promise<ChainProduct[]>>();
 
   /** The edit button beside the dropdown: open the Shops panel. */
   readonly editShops = output<void>();
@@ -50,6 +65,8 @@ export class GroceryScreen {
   readonly shopChange = output<{ id: string; shopId: string | null }>();
   /** An item's category picked by hand, or cleared (null). */
   readonly categoryChange = output<{ id: string; categoryId: string | null }>();
+  /** An item linked to a chain product, or unlinked from that chain (null). */
+  readonly linkChange = output<{ id: string; chain: Chain; code: string | null }>();
 
   /** Undefined for All shops. */
   protected readonly shop = computed(() =>
@@ -76,6 +93,27 @@ export class GroceryScreen {
       items.map((x) => (x.id === id ? { ...x, shopId: shopId ?? undefined } : x)),
     );
     this.shopChange.emit({ id, shopId });
+  }
+
+  protected readonly firstSale = firstSale;
+
+  /** Shows the picked product right away, before the server answers. */
+  protected setLink(id: string, chain: Chain, product: ChainProduct | null): void {
+    const rank = (c: Chain) => CHAINS.findIndex((x) => x.id === c);
+    this.state.update((items) =>
+      items.map((x) =>
+        x.id === id
+          ? {
+              ...x,
+              links: [
+                ...(x.links ?? []).filter((l) => l.chain !== chain),
+                ...(product ? [{ chain, code: product.code, product }] : []),
+              ].sort((a, b) => rank(a.chain) - rank(b.chain)),
+            }
+          : x,
+      ),
+    );
+    this.linkChange.emit({ id, chain, code: product?.code ?? null });
   }
 
   protected setCategory(id: string, categoryId: string | null): void {

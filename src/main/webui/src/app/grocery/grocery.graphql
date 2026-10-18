@@ -26,6 +26,47 @@ query Grocery {
     shop {
       id
     }
+    links {
+      ...Link
+    }
+  }
+}
+
+fragment ChainProductFields on ChainProduct {
+  chain
+  code
+  name
+  description
+  quantity
+  price
+  url
+  sale {
+    label
+    price
+    endDate
+  }
+}
+
+fragment Link on ProductLink {
+  chain
+  code
+  product {
+    ...ChainProductFields
+  }
+}
+
+query ChainSearch($chain: Chain!, $query: String!) {
+  chainSearch(chain: $chain, query: $query) {
+    ...ChainProductFields
+  }
+}
+
+mutation SetProductLink($id: String!, $chain: Chain!, $code: String) {
+  setProductLink(id: $id, chain: $chain, code: $code) {
+    id
+    links {
+      ...Link
+    }
   }
 }
 
