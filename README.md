@@ -22,7 +22,7 @@ Runs the native image (built from `src/main/docker/Dockerfile.native-micro`) wit
 
 ```sh
 ./mvnw package -Dnative -DskipTests   # native executable in target/
-cp .env.example .env                  # once; put your OpenRouter key in .env (git-ignored)
+cp .env.example .env                  # once; put your OIDC realm URL and OpenRouter key in .env (git-ignored)
 docker compose up --build             # http://localhost:8080
 docker compose down -v                # stop and drop the database volume
 ```
@@ -35,6 +35,8 @@ All environment-specific values come from environment variables (Dev Services co
 |---|---|---|
 | `QUARKUS_DATASOURCE_JDBC_URL` | App database, e.g. `jdbc:postgresql://host:5432/restok` | — |
 | `QUARKUS_DATASOURCE_USERNAME` / `QUARKUS_DATASOURCE_PASSWORD` | Database credentials (password from a Secret) | — |
+| `QUARKUS_OIDC_AUTH_SERVER_URL` | OIDC realm URL, e.g. `https://keycloak.example.com/realms/home`. Required, also in dev (put it in `.env`). The SPA gets it from `/auth-config` | — |
+| `QUARKUS_OIDC_CLIENT_ID` | OIDC client: public, standard flow with PKCE, redirect URI and web origin = the app URL | `restok` |
 | `OPENROUTER_API_KEY` | OpenRouter API key (Secret). App starts without it; AI calls then fail | `not-configured` |
 | `OPENROUTER_MODEL` | Model id, see https://openrouter.ai/models | `openrouter/auto` |
 | `OPENROUTER_TIMEOUT` | Request timeout | `60s` |

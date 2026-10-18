@@ -12,6 +12,20 @@ quarkus:
   smallrye-graphql:
     schema-include-scalars: true
 
+  # OIDC (e.g. Keycloak). The one setting is QUARKUS_OIDC_AUTH_SERVER_URL, the realm URL
+  # (https://keycloak.example.com/realms/<realm>); the SPA gets it from /auth-config. The client is public, with PKCE.
+  oidc:
+    client-id: restok
+  keycloak:
+    devservices:
+      enabled: false
+  http:
+    auth:
+      permission:
+        graphql:
+          paths: /graphql
+          policy: authenticated
+
   # Angular SPA (src/main/webui), built and served by Quinoa from the same origin
   quinoa:
     build-dir: dist/restok/browser

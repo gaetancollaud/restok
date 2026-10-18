@@ -30,6 +30,7 @@ services:
       QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/restok
       QUARKUS_DATASOURCE_USERNAME: restok
       QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-restok}
+      QUARKUS_OIDC_AUTH_SERVER_URL: ${QUARKUS_OIDC_AUTH_SERVER_URL:?set it in .env}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-openrouter/auto}
       # no OTLP collector locally

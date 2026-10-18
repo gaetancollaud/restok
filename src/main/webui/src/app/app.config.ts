@@ -2,18 +2,24 @@ import {
   ApplicationConfig,
   inject,
   isDevMode,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
 import { InMemoryCache } from '@apollo/client';
 import { provideApollo } from 'apollo-angular';
 import { HttpLink } from 'apollo-angular/http';
+import { provideOAuthClient } from 'angular-oauth2-oidc';
+import { login } from './auth/auth';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(),
+    provideHttpClient(withInterceptorsFromDi()),
+    // Sends the access token to /graphql
+    provideOAuthClient({ resourceServer: { allowedUrls: ['/graphql'], sendAccessToken: true } }),
+    provideAppInitializer(login),
     provideApollo(() => ({
       link: inject(HttpLink).create({ uri: '/graphql' }),
       cache: new InMemoryCache(),

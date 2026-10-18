@@ -33,6 +33,7 @@ type ProductCategory {
 "Query root"
 type Query {
   categories: [ProductCategory!]!
+  me: String!
   products(shopId: String): [Product!]!
   shops: [Shop!]!
 }
