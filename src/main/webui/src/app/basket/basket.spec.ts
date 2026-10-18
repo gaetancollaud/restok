@@ -1,6 +1,27 @@
-import { boughtList, hiddenFor, Item, orderFor } from './basket';
+import { boughtList, hiddenFor, Item, nearestShop, orderFor } from './basket';
 
 describe('basket', () => {
+  describe('nearestShop', () => {
+    // 0.0009° of latitude is about 100 m
+    const at = (id: string, meters: number) => ({ id, name: id, latitude: 46.5 + (meters / 100) * 0.0009, longitude: 6.6 });
+
+    it('picks a shop within 200 m', () => {
+      expect(nearestShop([at('coop', 50)], 46.5, 6.6)?.id).toBe('coop');
+    });
+
+    it('picks the nearest of two close shops', () => {
+      expect(nearestShop([at('coop', 150), at('migros', 80)], 46.5, 6.6)?.id).toBe('migros');
+    });
+
+    it('picks nothing beyond 200 m', () => {
+      expect(nearestShop([at('coop', 250)], 46.5, 6.6)).toBeUndefined();
+    });
+
+    it('ignores shops without a location', () => {
+      expect(nearestShop([{ id: 'lidl', name: 'Lidl' }, at('coop', 50)], 46.5, 6.6)?.id).toBe('coop');
+    });
+  });
+
   const items: Item[] = [
     { id: '1', name: 'Tomatoes', aisle: 'Produce' },
     { id: '2', name: 'Bread', aisle: 'Bakery' },

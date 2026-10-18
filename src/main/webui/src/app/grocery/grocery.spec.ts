@@ -16,7 +16,14 @@ import { Grocery } from './grocery';
 describe('Grocery', () => {
   let controller: ApolloTestingController;
 
+  /** Stubs the device position; the default never answers, like a pending permission prompt. */
+  const geolocate = (getCurrentPosition: (ok: PositionCallback, fail: PositionErrorCallback) => void) =>
+    Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition } });
+  const locateAt = (latitude: number, longitude: number) =>
+    geolocate((ok) => ok({ coords: { latitude, longitude } } as GeolocationPosition));
+
   beforeEach(() => {
+    geolocate(() => undefined);
     TestBed.configureTestingModule({ imports: [Grocery, ApolloTestingModule] });
     controller = TestBed.inject(ApolloTestingController);
   });
@@ -46,21 +53,64 @@ describe('Grocery', () => {
   const apple = product('1', 'apple', 'Fruits');
   const baguette = product('2', 'baguette', 'Pain');
 
-  async function render(products: unknown[] = [apple, baguette]) {
+  async function render(products: unknown[] = [apple, baguette], shops: unknown[] = [coop]) {
     const fixture = TestBed.createComponent(Grocery);
     fixture.detectChanges();
-    controller.expectOne(GroceryDocument).flush({ data: { shops: [coop], categories, products } });
+    controller.expectOne(GroceryDocument).flush({ data: { shops, categories, products } });
     await fixture.whenStable();
     return fixture;
   }
 
   const toBuy = (el: HTMLElement) =>
     Array.from(el.querySelectorAll('[aria-label="To buy"] .label')).map((l) => l.textContent);
+  const shopSelect = (el: HTMLElement) => el.querySelector<HTMLSelectElement>('app-shop-select select')!;
 
   it("sorts To buy in the shop's category order", async () => {
+    locateAt(46.5, 6.6);
     const el = (await render()).nativeElement as HTMLElement;
-    expect(el.querySelector('select')!.value).toBe('coop');
+    expect(shopSelect(el).value).toBe('coop');
     expect(toBuy(el)).toEqual(['baguette', 'apple']);
+  });
+
+  describe('shop on open', () => {
+    // 0.00045° of latitude is about 50 m
+    it('opens on All shops while the position is unknown', async () => {
+      const el = (await render()).nativeElement as HTMLElement;
+      expect(shopSelect(el).value).toBe('');
+      expect(toBuy(el)).toEqual(['apple', 'baguette']);
+    });
+
+    it('selects a shop 50 m away', async () => {
+      locateAt(46.5 + 0.00045, 6.6);
+      const el = (await render()).nativeElement as HTMLElement;
+      expect(shopSelect(el).value).toBe('coop');
+    });
+
+    it('stays on All shops 250 m away', async () => {
+      locateAt(46.5 + 0.00225, 6.6);
+      const el = (await render()).nativeElement as HTMLElement;
+      expect(shopSelect(el).value).toBe('');
+    });
+
+    it('stays on All shops, without an error, when the location is refused', async () => {
+      geolocate((_, fail) => fail({ code: 1 } as GeolocationPositionError));
+      const el = (await render()).nativeElement as HTMLElement;
+      expect(shopSelect(el).value).toBe('');
+      expect(el.querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it('keeps a shop picked by hand before the position arrives', async () => {
+      let answer!: PositionCallback;
+      geolocate((ok) => (answer = ok));
+      const lidl = { ...coop, id: 'lidl', name: 'Lidl', latitude: null, longitude: null };
+      const fixture = await render([apple, baguette], [coop, lidl]);
+      const el = fixture.nativeElement as HTMLElement;
+      shopSelect(el).value = 'lidl';
+      shopSelect(el).dispatchEvent(new Event('change'));
+      answer({ coords: { latitude: 46.5, longitude: 6.6 } } as GeolocationPosition);
+      await fixture.whenStable();
+      expect(shopSelect(el).value).toBe('lidl');
+    });
   });
 
   it('marks a tapped product bought', async () => {
@@ -82,7 +132,8 @@ describe('Grocery', () => {
   });
 
   it('restricts a product to a shop from its popup, and back to any shop', async () => {
-    const lidl = { ...coop, id: 'lidl', name: 'Lidl', categoryOrder: [] };
+    const lidl = { ...coop, id: 'lidl', name: 'Lidl', latitude: null, longitude: null, categoryOrder: [] };
+    locateAt(46.5, 6.6);
     const fixture = TestBed.createComponent(Grocery);
     fixture.detectChanges();
     controller.expectOne(GroceryDocument).flush({ data: { shops: [coop, lidl], categories, products: [apple, baguette] } });
@@ -110,6 +161,7 @@ describe('Grocery', () => {
   });
 
   it('sets a product category from its popup, and clears it', async () => {
+    locateAt(46.5, 6.6);
     const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
     el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!
@@ -135,6 +187,7 @@ describe('Grocery', () => {
   });
 
   it('adds a new product and refetches', async () => {
+    locateAt(46.5, 6.6);
     const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
     const input = el.querySelector<HTMLInputElement>('input')!;
@@ -179,6 +232,7 @@ describe('Grocery', () => {
 
   describe('Shops panel', () => {
     async function openShops() {
+      locateAt(46.5, 6.6);
       const fixture = await render();
       const el = fixture.nativeElement as HTMLElement;
       el.querySelector<HTMLButtonElement>('[aria-label="Edit shops and aisle order"]')!.click();

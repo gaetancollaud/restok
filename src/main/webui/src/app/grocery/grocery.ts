@@ -1,7 +1,7 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
-import { Item, Shop } from '../basket/basket';
+import { ALL_SHOPS, Item, nearestShop, Shop } from '../basket/basket';
 import { GroceryScreen } from '../basket/grocery-screen/grocery-screen';
 import { ShopEditor } from '../basket/shop-editor/shop-editor';
 import {
@@ -47,6 +47,8 @@ export class Grocery {
       id: s.id,
       name: s.name,
       aisles: s.categoryOrder.map((c) => c.name),
+      latitude: s.latitude ?? undefined,
+      longitude: s.longitude ?? undefined,
     })),
   );
   protected readonly items = computed<Item[]>(() =>
@@ -64,8 +66,28 @@ export class Grocery {
   protected readonly categories = computed(() => this.data()?.categories ?? []);
   protected readonly error = signal<string | null>(null);
   protected readonly panel = signal<'list' | 'shops'>('list');
-  /** Shared by both panels; empty means the first shop. */
-  protected readonly shopId = signal('');
+  /** Shared by both panels; opens on All shops, then the nearby shop if there is one. */
+  protected readonly shopId = signal(ALL_SHOPS);
+  /** The device position, asked once on open; stays unset when refused, unavailable or too slow. */
+  private readonly position = signal<GeolocationCoordinates | undefined>(undefined);
+  private nearbyChecked = false;
+
+  constructor() {
+    navigator.geolocation?.getCurrentPosition(
+      (p) => this.position.set(p.coords),
+      () => undefined,
+      { timeout: 10_000, maximumAge: 60_000 },
+    );
+  }
+
+  /** Once the position and the shops are both known, select the nearest shop, unless one was picked by hand. */
+  private readonly selectNearby = effect(() => {
+    const position = this.position();
+    if (this.nearbyChecked || !position || !this.data()) return;
+    this.nearbyChecked = true;
+    const shop = nearestShop(this.shops(), position.latitude, position.longitude);
+    if (shop && untracked(this.shopId) === ALL_SHOPS) this.shopId.set(shop.id);
+  });
 
   /**
    * Classification runs on the server and arrives with the polled data, so this never settles:

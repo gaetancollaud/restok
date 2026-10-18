@@ -10,6 +10,8 @@ export interface Shop {
   id: string;
   name: string;
   aisles?: string[];
+  latitude?: number;
+  longitude?: number;
 }
 
 export type Category = { id: string; name: string };
@@ -37,6 +39,30 @@ export const ALL_SHOPS = '*';
 /** The shop with this id, or the first shop when it is gone. */
 export function findShop(shops: Shop[], id: string): Shop | undefined {
   return shops.find((s) => s.id === id) ?? shops[0];
+}
+
+/** How close the device must be to a shop for it to be selected on open. */
+const NEARBY_METERS = 200;
+
+/** Great-circle distance in meters (haversine). */
+function distance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const rad = Math.PI / 180;
+  const a =
+    Math.sin(((lat2 - lat1) * rad) / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lon2 - lon1) * rad) / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(a));
+}
+
+/** The nearest shop within 200 m of this position; shops without a location are ignored. */
+export function nearestShop(shops: Shop[], latitude: number, longitude: number): Shop | undefined {
+  let best: Shop | undefined;
+  let bestDistance = NEARBY_METERS;
+  for (const shop of shops) {
+    if (shop.latitude === undefined || shop.longitude === undefined) continue;
+    const d = distance(latitude, longitude, shop.latitude, shop.longitude);
+    if (d <= bestDistance) [best, bestDistance] = [shop, d];
+  }
+  return best;
 }
 
 /** Still to buy, but only at another shop than this one. Never without a shop (All shops). */
