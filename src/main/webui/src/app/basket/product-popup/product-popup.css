@@ -45,6 +45,32 @@
   font-style: italic;
 }
 
+.danger {
+  width: 100%;
+  min-height: var(--size-touch);
+  margin-top: var(--space-4);
+  padding: 0 var(--space-4);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--danger);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.danger.confirm {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.danger:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .hint {
   margin: 0;
   font-size: 15px;

@@ -63,6 +63,10 @@ mutation SetProductShop($id: String!, $shopId: String) {
   }
 }
 
+mutation DeleteProduct($id: String!) {
+  deleteProduct(id: $id)
+}
+
 mutation AddShop($name: String!) {
   addShop(name: $name) {
     id

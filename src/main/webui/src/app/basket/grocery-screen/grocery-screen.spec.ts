@@ -48,7 +48,10 @@ describe('GroceryScreen', () => {
     select.dispatchEvent(new Event('change'));
     await fixture.whenStable();
 
-    fixture.componentRef.setInput('shops', shops.map((s) => ({ ...s })));
+    fixture.componentRef.setInput(
+      'shops',
+      shops.map((s) => ({ ...s })),
+    );
     await fixture.whenStable();
     expect(select.value).toBe('coop');
     expect(tiles(el, 'To buy')).toEqual(['Bread', 'Tomatoes']);
@@ -57,7 +60,9 @@ describe('GroceryScreen', () => {
   it('needs a second tap to mark a To-buy tile bought', async () => {
     const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
-    el.querySelector<HTMLButtonElement>('[aria-label="Tomatoes, tap twice to mark as bought"]')!.click();
+    el.querySelector<HTMLButtonElement>(
+      '[aria-label="Tomatoes, tap twice to mark as bought"]',
+    )!.click();
     await fixture.whenStable();
     expect(tiles(el, 'To buy')).toEqual(['Tomatoes', 'Bread']);
   });
@@ -68,7 +73,9 @@ describe('GroceryScreen', () => {
     const changes: unknown[] = [];
     fixture.componentInstance.boughtChange.subscribe((c) => changes.push(c));
 
-    const tile = el.querySelector<HTMLButtonElement>('[aria-label="Tomatoes, tap twice to mark as bought"]')!;
+    const tile = el.querySelector<HTMLButtonElement>(
+      '[aria-label="Tomatoes, tap twice to mark as bought"]',
+    )!;
     tile.click();
     tile.click();
     await fixture.whenStable();
@@ -109,7 +116,7 @@ describe('GroceryScreen', () => {
     expect(input.value).toBe('');
   });
 
-  it('shows each tile\'s category state as a dot and in its label', async () => {
+  it("shows each tile's category state as a dot and in its label", async () => {
     const fixture = TestBed.createComponent(GroceryScreen);
     fixture.componentRef.setInput('shops', shops);
     fixture.componentRef.setInput('items', [
@@ -122,9 +129,15 @@ describe('GroceryScreen', () => {
     const el = fixture.nativeElement as HTMLElement;
     const dot = (label: string) => el.querySelector(`[aria-label="${label}"] .dot`)!;
     expect(dot('Tomatoes, Produce, tap twice to mark as bought').className).toContain('classified');
-    expect(dot('Tomatoes, Produce, tap twice to mark as bought').getAttribute('title')).toBe('Category: Produce');
-    expect(dot('Gruyère, sorting into a category, tap twice to mark as bought').className).toContain('pending');
-    expect(dot('Candles, no category, tap twice to mark as bought').className).toContain('unclassified');
+    expect(dot('Tomatoes, Produce, tap twice to mark as bought').getAttribute('title')).toBe(
+      'Category: Produce',
+    );
+    expect(
+      dot('Gruyère, sorting into a category, tap twice to mark as bought').className,
+    ).toContain('pending');
+    expect(dot('Candles, no category, tap twice to mark as bought').className).toContain(
+      'unclassified',
+    );
     expect(dot('Add Bread again, Bakery').className).toContain('classified');
 
     const cat = (label: string) => el.querySelector(`[aria-label="${label}"] .cat`)?.textContent;
@@ -137,7 +150,10 @@ describe('GroceryScreen', () => {
   it('shows a new item pending, then sorts it into its aisle once classified', async () => {
     const fixture = await render();
     let answer!: (aisle: string | null) => void;
-    fixture.componentRef.setInput('classify', () => new Promise<string | null>((r) => (answer = r)));
+    fixture.componentRef.setInput(
+      'classify',
+      () => new Promise<string | null>((r) => (answer = r)),
+    );
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const input = el.querySelector<HTMLInputElement>('input')!;
@@ -145,13 +161,21 @@ describe('GroceryScreen', () => {
     input.dispatchEvent(new Event('input'));
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
-    expect(el.querySelector('[aria-label="Apples, sorting into a category, tap twice to mark as bought"] .dot.pending')).not.toBeNull();
+    expect(
+      el.querySelector(
+        '[aria-label="Apples, sorting into a category, tap twice to mark as bought"] .dot.pending',
+      ),
+    ).not.toBeNull();
     expect(tiles(el, 'To buy')).toEqual(['Tomatoes', 'Bread', 'Apples']);
 
     answer('Produce');
     await new Promise((r) => setTimeout(r)); // let the classify result land
     await fixture.whenStable();
-    expect(el.querySelector('[aria-label="Apples, Produce, tap twice to mark as bought"] .dot.classified')).not.toBeNull();
+    expect(
+      el.querySelector(
+        '[aria-label="Apples, Produce, tap twice to mark as bought"] .dot.classified',
+      ),
+    ).not.toBeNull();
     expect(tiles(el, 'To buy')).toEqual(['Apples', 'Tomatoes', 'Bread']);
   });
 
@@ -163,7 +187,11 @@ describe('GroceryScreen', () => {
     input.dispatchEvent(new Event('input'));
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
-    expect(el.querySelector('[aria-label="Candles, no category, tap twice to mark as bought"] .dot.unclassified')).not.toBeNull();
+    expect(
+      el.querySelector(
+        '[aria-label="Candles, no category, tap twice to mark as bought"] .dot.unclassified',
+      ),
+    ).not.toBeNull();
   });
 
   it('says "All done" when nothing is left to buy', async () => {
@@ -188,7 +216,11 @@ describe('GroceryScreen', () => {
       return { fixture, el: fixture.nativeElement as HTMLElement };
     }
     const hiddenText = (el: HTMLElement) => el.querySelector('.hidden-count')?.textContent?.trim();
-    const pickShop = async (fixture: { whenStable: () => Promise<unknown> }, select: HTMLSelectElement, id: string) => {
+    const pickShop = async (
+      fixture: { whenStable: () => Promise<unknown> },
+      select: HTMLSelectElement,
+      id: string,
+    ) => {
       select.value = id;
       select.dispatchEvent(new Event('change'));
       await fixture.whenStable();
@@ -224,12 +256,15 @@ describe('GroceryScreen', () => {
       const changes: unknown[] = [];
       fixture.componentInstance.shopChange.subscribe((c) => changes.push(c));
 
-      el.querySelector('[aria-label="Tomatoes, tap twice to mark as bought"]')!
-        .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+      el.querySelector('[aria-label="Tomatoes, tap twice to mark as bought"]')!.dispatchEvent(
+        new MouseEvent('contextmenu', { cancelable: true }),
+      );
       await fixture.whenStable();
       const popup = el.querySelector('app-product-popup')!;
       expect(popup.querySelector('h2')!.textContent).toBe('Tomatoes');
-      const shopSelect = popup.querySelector<HTMLSelectElement>('select[aria-label="Buy only at"]')!;
+      const shopSelect = popup.querySelector<HTMLSelectElement>(
+        'select[aria-label="Buy only at"]',
+      )!;
       expect(shopSelect.value).toBe('');
 
       await pickShop(fixture, shopSelect, 'coop');
@@ -264,10 +299,13 @@ describe('GroceryScreen', () => {
       // Migros orders [Produce, Bakery]
       expect(tiles(el, 'To buy')).toEqual(['Bread', 'Tomatoes']);
 
-      el.querySelector('[aria-label="Tomatoes, Bakery, tap twice to mark as bought"]')!
-        .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+      el.querySelector(
+        '[aria-label="Tomatoes, Bakery, tap twice to mark as bought"]',
+      )!.dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
       await fixture.whenStable();
-      const select = el.querySelector<HTMLSelectElement>('app-product-popup select[aria-label="Category"]')!;
+      const select = el.querySelector<HTMLSelectElement>(
+        'app-product-popup select[aria-label="Category"]',
+      )!;
       expect(select.value).toBe('bakery');
       const pick = async (id: string) => {
         select.value = id;
@@ -277,11 +315,17 @@ describe('GroceryScreen', () => {
 
       await pick('produce');
       expect(tiles(el, 'To buy')).toEqual(['Tomatoes', 'Bread']);
-      expect(el.querySelector('[aria-label="Tomatoes, Produce, tap twice to mark as bought"] .cat')!.textContent).toBe('Produce');
+      expect(
+        el.querySelector('[aria-label="Tomatoes, Produce, tap twice to mark as bought"] .cat')!
+          .textContent,
+      ).toBe('Produce');
 
       await pick('');
       expect(tiles(el, 'To buy')).toEqual(['Bread', 'Tomatoes']);
-      expect(el.querySelector('[aria-label="Tomatoes, no category, tap twice to mark as bought"] .cat')!.textContent).toBe('No category');
+      expect(
+        el.querySelector('[aria-label="Tomatoes, no category, tap twice to mark as bought"] .cat')!
+          .textContent,
+      ).toBe('No category');
       expect(changes).toEqual([
         { id: '1', categoryId: 'produce' },
         { id: '1', categoryId: null },
@@ -289,11 +333,45 @@ describe('GroceryScreen', () => {
     });
   });
 
-  describe('install / update button', () => {
-    const stub = { canInstall: signal(false), updateReady: signal(false), install: vi.fn(), update: vi.fn() };
-    beforeEach(() => TestBed.configureTestingModule({ providers: [{ provide: Pwa, useValue: stub }] }));
+  it('deletes an item from its popup, To buy or Bought', async () => {
+    const fixture = await render();
+    const el = fixture.nativeElement as HTMLElement;
+    const removed: string[] = [];
+    fixture.componentInstance.productRemoved.subscribe((id) => removed.push(id));
+    const deleteFrom = async (label: string) => {
+      el.querySelector(`[aria-label="${label}"]`)!.dispatchEvent(
+        new MouseEvent('contextmenu', { cancelable: true }),
+      );
+      await fixture.whenStable();
+      const del = el.querySelector<HTMLButtonElement>('app-product-popup .danger')!;
+      del.click();
+      await fixture.whenStable();
+      del.click();
+      await fixture.whenStable();
+    };
 
-    const button = (el: HTMLElement) => el.querySelector<HTMLButtonElement>('[aria-label$="Restok"]');
+    await deleteFrom('Tomatoes, tap twice to mark as bought');
+    expect(tiles(el, 'To buy')).toEqual(['Bread']);
+    expect(el.querySelector('app-product-popup')).toBeNull();
+
+    await deleteFrom('Add Coffee again');
+    expect(el.querySelector('[aria-label="Bought"]')).toBeNull();
+    expect(removed).toEqual(['1', '3']);
+  });
+
+  describe('install / update button', () => {
+    const stub = {
+      canInstall: signal(false),
+      updateReady: signal(false),
+      install: vi.fn(),
+      update: vi.fn(),
+    };
+    beforeEach(() =>
+      TestBed.configureTestingModule({ providers: [{ provide: Pwa, useValue: stub }] }),
+    );
+
+    const button = (el: HTMLElement) =>
+      el.querySelector<HTMLButtonElement>('[aria-label$="Restok"]');
 
     it('shows nothing when installed and up to date', async () => {
       stub.canInstall.set(false);

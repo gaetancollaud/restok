@@ -10,7 +10,16 @@ import {
 } from '@angular/core';
 import { Pwa } from '../../pwa/pwa';
 import { AddBar } from '../add-bar/add-bar';
-import { ALL_SHOPS, boughtList, Category, findShop, hiddenFor, Item, orderFor, Shop } from '../basket';
+import {
+  ALL_SHOPS,
+  boughtList,
+  Category,
+  findShop,
+  hiddenFor,
+  Item,
+  orderFor,
+  Shop,
+} from '../basket';
 import { ItemGrid } from '../item-grid/item-grid';
 import { ItemTile } from '../item-tile/item-tile';
 import { ProductPopup } from '../product-popup/product-popup';
@@ -50,6 +59,8 @@ export class GroceryScreen {
   readonly shopChange = output<{ id: string; shopId: string | null }>();
   /** An item's category picked by hand, or cleared (null). */
   readonly categoryChange = output<{ id: string; categoryId: string | null }>();
+  /** An item deleted for good from its popup. */
+  readonly productRemoved = output<string>();
 
   /** Undefined for All shops. */
   protected readonly shop = computed(() =>
@@ -83,11 +94,22 @@ export class GroceryScreen {
     this.state.update((items) =>
       items.map((x) =>
         x.id === id
-          ? { ...x, categoryId: categoryId ?? undefined, aisle: name, status: categoryId ? 'CLASSIFIED' : 'UNCLASSIFIED' }
+          ? {
+              ...x,
+              categoryId: categoryId ?? undefined,
+              aisle: name,
+              status: categoryId ? 'CLASSIFIED' : 'UNCLASSIFIED',
+            }
           : x,
       ),
     );
     this.categoryChange.emit({ id, categoryId });
+  }
+
+  protected remove(id: string): void {
+    this.state.update((items) => items.filter((x) => x.id !== id));
+    this.selectedId.set(null);
+    this.productRemoved.emit(id);
   }
 
   protected setBought(id: string, bought: boolean): void {

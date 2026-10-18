@@ -31,6 +31,9 @@
         label="Buy only at"
         (valueChange)="shopChange.emit($event || null)"
       />
+      <button type="button" class="danger" [class.confirm]="confirming()" (click)="remove()">
+        {{ confirming() ? 'Tap again to delete ' + item().name : 'Delete product' }}
+      </button>
     }
   </div>
 </dialog>

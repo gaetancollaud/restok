@@ -23,8 +23,10 @@ describe('ProductPopup', () => {
     fixture.componentInstance.shopChange.subscribe((v) => changes.push(v));
     fixture.componentInstance.categoryChange.subscribe((v) => categoryChanges.push(v));
     const el = fixture.nativeElement as HTMLElement;
-    const shopSelect = () => el.querySelector<HTMLSelectElement>('select[aria-label="Buy only at"]')!;
-    const categorySelect = () => el.querySelector<HTMLSelectElement>('select[aria-label="Category"]')!;
+    const shopSelect = () =>
+      el.querySelector<HTMLSelectElement>('select[aria-label="Buy only at"]')!;
+    const categorySelect = () =>
+      el.querySelector<HTMLSelectElement>('select[aria-label="Category"]')!;
     const pick = (select: HTMLSelectElement, value: string) => {
       select.value = value;
       select.dispatchEvent(new Event('change'));
@@ -32,10 +34,17 @@ describe('ProductPopup', () => {
     return { el, changes, categoryChanges, shopSelect, categorySelect, pick };
   }
 
-  const options = (select: HTMLSelectElement) => Array.from(select.options).map((o) => o.text.trim());
+  const options = (select: HTMLSelectElement) =>
+    Array.from(select.options).map((o) => o.text.trim());
 
   it('shows the product and "Any shop" when it has no shop', async () => {
-    const { el, shopSelect } = await render({ id: '1', name: 'Parmesan', aisle: 'Fromage', categoryId: 'fromage', status: 'CLASSIFIED' });
+    const { el, shopSelect } = await render({
+      id: '1',
+      name: 'Parmesan',
+      aisle: 'Fromage',
+      categoryId: 'fromage',
+      status: 'CLASSIFIED',
+    });
     expect(el.querySelector('dialog')!.open).toBe(true);
     expect(el.querySelector('h2')!.textContent).toBe('Parmesan');
     expect(options(shopSelect())).toEqual(['Any shop', 'Coop', 'Lidl']);
@@ -43,7 +52,11 @@ describe('ProductPopup', () => {
   });
 
   it('emits the picked shop, and null for "Any shop"', async () => {
-    const { changes, shopSelect, pick } = await render({ id: '1', name: 'Parmesan', shopId: 'lidl' });
+    const { changes, shopSelect, pick } = await render({
+      id: '1',
+      name: 'Parmesan',
+      shopId: 'lidl',
+    });
     expect(shopSelect().value).toBe('lidl');
     pick(shopSelect(), 'coop');
     pick(shopSelect(), '');
@@ -51,7 +64,13 @@ describe('ProductPopup', () => {
   });
 
   it('shows the current category, "No category" first', async () => {
-    const { el, categorySelect } = await render({ id: '1', name: 'Parmesan', aisle: 'Fromage', categoryId: 'fromage', status: 'CLASSIFIED' });
+    const { el, categorySelect } = await render({
+      id: '1',
+      name: 'Parmesan',
+      aisle: 'Fromage',
+      categoryId: 'fromage',
+      status: 'CLASSIFIED',
+    });
     expect(options(categorySelect())).toEqual(['No category', 'Fromage', 'Fruits']);
     expect(categorySelect().value).toBe('fromage');
     expect(el.querySelector('.cat')).toBeNull();
@@ -63,7 +82,12 @@ describe('ProductPopup', () => {
   });
 
   it('emits the picked category, and null for "No category"', async () => {
-    const { categoryChanges, categorySelect, pick } = await render({ id: '1', name: 'Tomato', categoryId: 'fruits', status: 'CLASSIFIED' });
+    const { categoryChanges, categorySelect, pick } = await render({
+      id: '1',
+      name: 'Tomato',
+      categoryId: 'fruits',
+      status: 'CLASSIFIED',
+    });
     pick(categorySelect(), 'fromage');
     pick(categorySelect(), '');
     expect(categoryChanges).toEqual(['fromage', null]);
@@ -78,5 +102,45 @@ describe('ProductPopup', () => {
   it('has no dropdown before a new product is saved', async () => {
     const { el } = await render({ id: 'n123', name: 'Parmesan', status: 'PENDING' });
     expect(el.querySelector('select')).toBeNull();
+    expect(el.querySelector('.danger')).toBeNull();
+  });
+
+  describe('delete', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    function renderNow() {
+      const fixture = TestBed.createComponent(ProductPopup);
+      fixture.componentRef.setInput('item', { id: '1', name: 'Tomatoe' });
+      fixture.componentRef.setInput('shops', shops);
+      fixture.detectChanges();
+      const removed: unknown[] = [];
+      fixture.componentInstance.removed.subscribe(() => removed.push(true));
+      const el = fixture.nativeElement as HTMLElement;
+      const del = el.querySelector<HTMLButtonElement>('.danger')!;
+      return { fixture, el, del, removed };
+    }
+
+    it('deletes only on the second tap, and closes', () => {
+      const { fixture, el, del, removed } = renderNow();
+      expect(del.textContent!.trim()).toBe('Delete product');
+      del.click();
+      fixture.detectChanges();
+      expect(del.textContent!.trim()).toBe('Tap again to delete Tomatoe');
+      expect(removed).toEqual([]);
+      del.click();
+      expect(removed).toEqual([true]);
+      expect(el.querySelector('dialog')!.open).toBe(false);
+    });
+
+    it('forgets the first tap after 4 s', () => {
+      const { fixture, del, removed } = renderNow();
+      del.click();
+      vi.advanceTimersByTime(4000);
+      fixture.detectChanges();
+      expect(del.textContent!.trim()).toBe('Delete product');
+      del.click();
+      expect(removed).toEqual([]);
+    });
   });
 });

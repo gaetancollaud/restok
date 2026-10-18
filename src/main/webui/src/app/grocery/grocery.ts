@@ -8,6 +8,7 @@ import {
   AddCategoryGQL,
   AddProductGQL,
   AddShopGQL,
+  DeleteProductGQL,
   DeleteShopGQL,
   GroceryGQL,
   GroceryQuery,
@@ -30,6 +31,7 @@ export class Grocery {
   private readonly boughtGql = inject(SetProductBoughtGQL);
   private readonly productShopGql = inject(SetProductShopGQL);
   private readonly productCategoryGql = inject(SetProductCategoryGQL);
+  private readonly deleteProductGql = inject(DeleteProductGQL);
   private readonly addShopGql = inject(AddShopGQL);
   private readonly updateShopGql = inject(UpdateShopGQL);
   private readonly deleteShopGql = inject(DeleteShopGQL);
@@ -115,6 +117,10 @@ export class Grocery {
     this.run(this.productCategoryGql.mutate({ variables: change }));
   }
 
+  protected removeProduct(id: string): void {
+    this.save(this.deleteProductGql.mutate({ variables: { id } }));
+  }
+
   protected add(name: string): void {
     this.run(
       this.addGql.mutate({
@@ -176,7 +182,9 @@ export class Grocery {
   /** Runs a shop edit, then reloads everything so both panels show the saved state. */
   private save<T>(op: Observable<T>, done?: (result: T) => void): void {
     this.run(
-      op.pipe(switchMap((result) => from(this.groceryRef.refetch()).pipe(map(() => done?.(result))))),
+      op.pipe(
+        switchMap((result) => from(this.groceryRef.refetch()).pipe(map(() => done?.(result)))),
+      ),
     );
   }
 
