@@ -36,6 +36,10 @@ export class ShopEditor {
   readonly remove = output<string>();
   /** The shop's whole new category order, as names. */
   readonly orderChange = output<{ id: string; aisles: string[] }>();
+  /** Category edits apply to every shop. */
+  readonly addCategory = output<string>();
+  readonly renameCategory = output<{ from: string; to: string }>();
+  readonly removeCategory = output<string>();
 
   // Local copy, reset whenever the parent passes new shops
   protected readonly state = linkedSignal(() => this.shops());
@@ -87,11 +91,11 @@ export class ShopEditor {
     this.orderChange.emit({ id: shop.id, aisles });
   }
 
-  /** Appends a category; a name already in the order (ignoring case) is ignored. */
-  protected addCategory(name: string): void {
+  /** Asks for a new category; a name already in the order (ignoring case) is ignored. */
+  protected newCategory(name: string): void {
     const aisles = this.shop()?.aisles ?? [];
     if (!aisles.some((c) => c.toLowerCase() === name.toLowerCase())) {
-      this.setOrder([...aisles, name]);
+      this.addCategory.emit(name);
     }
   }
 

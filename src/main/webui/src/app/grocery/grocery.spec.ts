@@ -4,7 +4,9 @@ import {
   AddCategoryDocument,
   AddProductDocument,
   AddShopDocument,
+  DeleteCategoryDocument,
   GroceryDocument,
+  RenameCategoryDocument,
   SetProductBoughtDocument,
   SetProductCategoryDocument,
   SetProductShopDocument,
@@ -266,7 +268,7 @@ describe('Grocery', () => {
       expect(toBuy(el)).toEqual(['apple', 'baguette']);
     });
 
-    it('creates a missing category before saving the order', async () => {
+    it('adds a category, which the server appends to every shop', async () => {
       const { fixture, el } = await openShops();
       const input = el.querySelector<HTMLInputElement>('app-shop-editor app-add-bar input')!;
       input.value = 'Épices';
@@ -275,11 +277,32 @@ describe('Grocery', () => {
       const add = controller.expectOne(AddCategoryDocument);
       expect(add.operation.variables).toEqual({ name: 'Épices' });
       add.flush({ data: { addCategory: { __typename: 'ProductCategory', id: 'epices' } } });
-      await tick();
-      const order = controller.expectOne(SetShopCategoryOrderDocument);
-      expect(order.operation.variables).toEqual({ shopId: 'coop', categoryIds: ['Pain', 'Fruits', 'epices'] });
-      order.flush({ data: { setShopCategoryOrder: { __typename: 'Shop', id: 'coop' } } });
       await refetch([coop]);
+      await fixture.whenStable();
+    });
+
+    it('renames a category by id', async () => {
+      const { fixture, el } = await openShops();
+      const field = el.querySelector<HTMLInputElement>('[aria-label="Name of Pain"]')!;
+      field.value = 'Boulangerie';
+      field.dispatchEvent(new Event('change'));
+      const op = controller.expectOne(RenameCategoryDocument);
+      expect(op.operation.variables).toEqual({ id: 'Pain', name: 'Boulangerie' });
+      op.flush({ data: { renameCategory: { __typename: 'ProductCategory', id: 'Pain' } } });
+      await refetch([coop]);
+      await fixture.whenStable();
+    });
+
+    it('deletes a category on the second tap', async () => {
+      const { fixture, el } = await openShops();
+      el.querySelector<HTMLButtonElement>('[aria-label="Delete Fruits"]')!.click();
+      await fixture.whenStable();
+      controller.expectNone(DeleteCategoryDocument);
+      el.querySelector<HTMLButtonElement>('[aria-label="Tap again to delete Fruits"]')!.click();
+      const op = controller.expectOne(DeleteCategoryDocument);
+      expect(op.operation.variables).toEqual({ id: 'Fruits' });
+      op.flush({ data: { deleteCategory: 'Fruits' } });
+      await refetch([{ ...coop, categoryOrder: [category('Pain')] }]);
       await fixture.whenStable();
     });
 

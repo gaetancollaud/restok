@@ -17,13 +17,17 @@ describe('ShopEditor', () => {
     c.rename.subscribe((r) => out.push(['rename', r]));
     c.remove.subscribe((id) => out.push(['remove', id]));
     c.orderChange.subscribe((o) => out.push(['order', o]));
+    c.addCategory.subscribe((n) => out.push(['addCategory', n]));
+    c.renameCategory.subscribe((r) => out.push(['renameCategory', r]));
+    c.removeCategory.subscribe((n) => out.push(['removeCategory', n]));
     await fixture.whenStable();
     return { fixture, el: fixture.nativeElement as HTMLElement, out };
   }
 
   const chip = (el: HTMLElement, name: string) =>
     Array.from(el.querySelectorAll<HTMLButtonElement>('.chip')).find((b) => b.textContent!.trim() === name)!;
-  const rows = (el: HTMLElement) => Array.from(el.querySelectorAll('app-category-list .name')).map((n) => n.textContent);
+  const rows = (el: HTMLElement) =>
+    Array.from(el.querySelectorAll<HTMLInputElement>('app-category-list .name')).map((n) => n.value);
 
   it("selects a shop and shows its order", async () => {
     const { fixture, el } = await render();
@@ -50,7 +54,7 @@ describe('ShopEditor', () => {
     ]);
   });
 
-  it('appends a category once, ignoring case', async () => {
+  it('asks for a new category once, ignoring case', async () => {
     const { fixture, el, out } = await render();
     for (const name of ['Fromage', 'pain']) {
       const input = el.querySelector<HTMLInputElement>('app-add-bar input')!;
@@ -59,8 +63,21 @@ describe('ShopEditor', () => {
       el.querySelector('app-add-bar form')!.dispatchEvent(new Event('submit'));
       await fixture.whenStable();
     }
-    expect(rows(el)).toEqual(['Pain', 'Fruits', 'Fromage']);
-    expect(out).toEqual([['order', { id: 'coop', aisles: ['Pain', 'Fruits', 'Fromage'] }]]);
+    expect(out).toEqual([['addCategory', 'Fromage']]);
+  });
+
+  it('forwards category renames and deletes', async () => {
+    const { fixture, el, out } = await render();
+    const field = el.querySelector<HTMLInputElement>('[aria-label="Name of Pain"]')!;
+    field.value = 'Boulangerie';
+    field.dispatchEvent(new Event('change'));
+    el.querySelector<HTMLButtonElement>('[aria-label="Delete Fruits"]')!.click();
+    await fixture.whenStable();
+    el.querySelector<HTMLButtonElement>('[aria-label="Tap again to delete Fruits"]')!.click();
+    expect(out).toEqual([
+      ['renameCategory', { from: 'Pain', to: 'Boulangerie' }],
+      ['removeCategory', 'Fruits'],
+    ]);
   });
 
   it('deletes a shop only on the second tap', async () => {

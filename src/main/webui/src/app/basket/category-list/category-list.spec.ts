@@ -11,7 +11,7 @@ describe('CategoryList', () => {
     return { fixture, el: fixture.nativeElement as HTMLElement, changes };
   }
 
-  const names = (el: HTMLElement) => Array.from(el.querySelectorAll('.name')).map((n) => n.textContent);
+  const names = (el: HTMLElement) => Array.from(el.querySelectorAll<HTMLInputElement>('.name')).map((n) => n.value);
   const grip = (el: HTMLElement, name: string) =>
     el.querySelector<HTMLButtonElement>(`[aria-label^="Move ${name},"]`)!;
 
@@ -39,11 +39,32 @@ describe('CategoryList', () => {
     expect(changes).toEqual([['Fruits', 'Fromage', 'Pain']]);
   });
 
-  it('removes a category, and says so when none are left', async () => {
-    const { fixture, el, changes } = await render(['Pain']);
-    el.querySelector<HTMLButtonElement>('[aria-label="Remove Pain"]')!.click();
+  it('asks for a second tap before emitting remove', async () => {
+    const { fixture, el, changes } = await render();
+    const removed: string[] = [];
+    fixture.componentInstance.remove.subscribe((n) => removed.push(n));
+    el.querySelector<HTMLButtonElement>('[aria-label="Delete Pain"]')!.click();
     await fixture.whenStable();
-    expect(changes).toEqual([[]]);
+    expect(removed).toEqual([]);
+    el.querySelector<HTMLButtonElement>('[aria-label="Tap again to delete Pain"]')!.click();
+    await fixture.whenStable();
+    expect(removed).toEqual(['Pain']);
+    expect(changes).toEqual([]);
+  });
+
+  it('emits a rename and shows the bound name until the parent updates it', async () => {
+    const { fixture, el } = await render();
+    const renames: { from: string; to: string }[] = [];
+    fixture.componentInstance.rename.subscribe((r) => renames.push(r));
+    const field = el.querySelector<HTMLInputElement>('[aria-label="Name of Pain"]')!;
+    field.value = ' Boulangerie ';
+    field.dispatchEvent(new Event('change'));
+    expect(renames).toEqual([{ from: 'Pain', to: 'Boulangerie' }]);
+    expect(field.value).toBe('Pain');
+  });
+
+  it('says so when there are no categories', async () => {
+    const { el } = await render([]);
     expect(el.querySelector('.hint')!.textContent).toContain('No categories yet');
   });
 });

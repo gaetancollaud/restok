@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
+import { from, map, Observable, of, switchMap } from 'rxjs';
 import { ALL_SHOPS, Item, nearestShop, Shop } from '../basket/basket';
 import { GroceryScreen } from '../basket/grocery-screen/grocery-screen';
 import { ShopEditor } from '../basket/shop-editor/shop-editor';
@@ -8,10 +8,12 @@ import {
   AddCategoryGQL,
   AddProductGQL,
   AddShopGQL,
+  DeleteCategoryGQL,
   DeleteProductGQL,
   DeleteShopGQL,
   GroceryGQL,
   GroceryQuery,
+  RenameCategoryGQL,
   SetProductBoughtGQL,
   SetProductCategoryGQL,
   SetProductShopGQL,
@@ -37,6 +39,8 @@ export class Grocery {
   private readonly deleteShopGql = inject(DeleteShopGQL);
   private readonly orderGql = inject(SetShopCategoryOrderGQL);
   private readonly addCategoryGql = inject(AddCategoryGQL);
+  private readonly renameCategoryGql = inject(RenameCategoryGQL);
+  private readonly deleteCategoryGql = inject(DeleteCategoryGQL);
   private readonly groceryRef = inject(GroceryGQL).watch();
 
   private readonly data = toSignal(
@@ -160,23 +164,27 @@ export class Grocery {
     this.save(this.order(id, aisles));
   }
 
-  /** Saves an order of category names, creating the ones that don't exist yet (names match ignoring case). */
+  /** A new category, appended to every shop by the server. */
+  protected addCategory(name: string): void {
+    this.save(this.addCategoryGql.mutate({ variables: { name } }));
+  }
+
+  protected renameCategory({ from, to }: { from: string; to: string }): void {
+    this.save(this.renameCategoryGql.mutate({ variables: { id: this.categoryId(from), name: to } }));
+  }
+
+  /** Deletes the category everywhere; its products become uncategorized. */
+  protected removeCategory(name: string): void {
+    this.save(this.deleteCategoryGql.mutate({ variables: { id: this.categoryId(name) } }));
+  }
+
+  /** Saves an order of category names. */
   private order(shopId: string, names: string[]): Observable<unknown> {
-    const ids = new Map((this.data()?.categories ?? []).map((c) => [c.name.toLowerCase(), c.id]));
-    const missing = names.filter((n) => !ids.has(n.toLowerCase()));
-    const created = missing.map((name) =>
-      this.addCategoryGql
-        .mutate({ variables: { name } })
-        .pipe(map((r) => ids.set(name.toLowerCase(), r.data!.addCategory.id))),
-    );
-    const ready: Observable<unknown> = created.length ? forkJoin(created) : of(null);
-    return ready.pipe(
-      switchMap(() =>
-        this.orderGql.mutate({
-          variables: { shopId, categoryIds: names.map((n) => ids.get(n.toLowerCase())!) },
-        }),
-      ),
-    );
+    return this.orderGql.mutate({ variables: { shopId, categoryIds: names.map((n) => this.categoryId(n)) } });
+  }
+
+  private categoryId(name: string): string {
+    return this.data()!.categories.find((c) => c.name === name)!.id;
   }
 
   /** Runs a shop edit, then reloads everything so both panels show the saved state. */

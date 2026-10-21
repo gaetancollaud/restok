@@ -2,6 +2,7 @@ package io.github.gaetancollaud.restok.category;
 
 import io.agroal.api.AgroalDataSource;
 import io.github.gaetancollaud.restok.TestDb;
+import io.github.gaetancollaud.restok.product.ProductGraphQLApiTest;
 import io.github.gaetancollaud.restok.shop.ShopGraphQLApiTest;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static io.github.gaetancollaud.restok.GraphQL.post;
 import static org.hamcrest.Matchers.hasItem;
@@ -114,13 +116,26 @@ class CategoryGraphQLApiTest {
     }
 
     @Test
+    void deleteUnclassifiesItsProducts() {
+        String spices = add("Spices"); // not a default: TestDb.reset doesn't restore deleted defaults
+        String pepper = ProductGraphQLApiTest.addProduct("pepper");
+        ProductGraphQLApiTest.setCategory(pepper, "Spices");
+        post(DELETE, Map.of("id", spices)).body("errors", nullValue());
+        post("{ products { name classification category { name } } }")
+                .body("data.products[0].classification", is("UNCLASSIFIED"))
+                .body("data.products[0].category", nullValue());
+    }
+
+    @Test
     void addAppendsToEveryShop() {
         String coop = ShopGraphQLApiTest.addShop("Coop");
         String lidl = ShopGraphQLApiTest.addShop("Lidl");
         ShopGraphQLApiTest.setOrder(coop, "Pain", "Fruits");
+        List<String> coopBefore = ShopGraphQLApiTest.orderOf(coop);
+        List<String> lidlBefore = ShopGraphQLApiTest.orderOf(lidl);
         add("Épices");
-        assertEquals(List.of("Pain", "Fruits", "Épices"), ShopGraphQLApiTest.orderOf(coop));
-        assertEquals(List.of("Épices"), ShopGraphQLApiTest.orderOf(lidl));
+        assertEquals(Stream.concat(coopBefore.stream(), Stream.of("Épices")).toList(), ShopGraphQLApiTest.orderOf(coop));
+        assertEquals(Stream.concat(lidlBefore.stream(), Stream.of("Épices")).toList(), ShopGraphQLApiTest.orderOf(lidl));
     }
 
     @Test
@@ -129,13 +144,13 @@ class CategoryGraphQLApiTest {
         ShopGraphQLApiTest.setOrder(coop, "Pain", "Fruits");
         post(ADD, Map.of("name", "fruits")).body("errors[0].message", is("category name already exists"));
         post(ADD, Map.of("name", "  ")).body("errors[0].message", is("name must not be blank"));
-        assertEquals(List.of("Pain", "Fruits"), ShopGraphQLApiTest.orderOf(coop));
+        assertEquals(ShopGraphQLApiTest.full("Pain", "Fruits"), ShopGraphQLApiTest.orderOf(coop));
     }
 
     @Test
-    void shopAddedLaterStartsEmpty() {
+    void shopAddedLaterGetsIt() {
         add("Épices");
         String coop = ShopGraphQLApiTest.addShop("Coop");
-        assertEquals(List.of(), ShopGraphQLApiTest.orderOf(coop));
+        assertEquals(ShopGraphQLApiTest.full(), ShopGraphQLApiTest.orderOf(coop));
     }
 }

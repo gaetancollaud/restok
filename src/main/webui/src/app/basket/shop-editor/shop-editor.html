@@ -42,6 +42,8 @@
       <app-category-list
         [categories]="shop.aisles ?? []"
         (categoriesChange)="setOrder($event)"
+        (rename)="renameCategory.emit($event)"
+        (remove)="removeCategory.emit($event)"
         [label]="'Aisle order for ' + shop.name"
       />
     </section>
@@ -56,6 +58,6 @@
 </main>
 @if (shop()) {
   <footer class="footer">
-    <app-add-bar placeholder="Add a category" label="New category" buttonLabel="Add category" (add)="addCategory($event)" />
+    <app-add-bar placeholder="Add a category" label="New category" buttonLabel="Add category" (add)="newCategory($event)" />
   </footer>
 }

@@ -48,6 +48,8 @@ public class ShopGraphQLApi {
         Shop shop = new Shop();
         apply(shop, name, latitude, longitude);
         repository.persist(shop);
+        repository.flush(); // the native insert below references the new row
+        orderRepository.seed(shop);
         return shop;
     }
 
@@ -84,6 +86,9 @@ public class ShopGraphQLApi {
                 .collect(Collectors.toMap(c -> c.id, Function.identity()));
         if (byId.size() != categoryIds.size()) {
             throw new GraphQLException("category not found");
+        }
+        if (categoryIds.size() != categoryRepository.count()) {
+            throw new GraphQLException("order must contain every category");
         }
         orderRepository.replace(shop, categoryIds.stream().map(byId::get).toList());
         return shop;

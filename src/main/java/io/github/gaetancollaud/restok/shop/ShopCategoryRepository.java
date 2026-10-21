@@ -32,6 +32,16 @@ public class ShopCategoryRepository implements PanacheRepositoryBase<ShopCategor
                 .executeUpdate();
     }
 
+    /** Gives a flushed shop every category, sorted by name. Must run in a transaction. */
+    public void seed(Shop shop) {
+        getEntityManager().createNativeQuery("""
+                        insert into shop_category_order (shop_id, category_id, position)
+                        select :shop, c.id, row_number() over (order by c.name) - 1
+                        from product_category c""")
+                .setParameter("shop", shop.id)
+                .executeUpdate();
+    }
+
     /** Replaces the shop's whole order. Must run in a transaction. */
     public void replace(Shop shop, List<ProductCategory> ordered) {
         delete("shop.id", shop.id);

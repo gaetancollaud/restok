@@ -1,9 +1,20 @@
-import { afterNextRender, Component, computed, ElementRef, inject, Injector, input, model, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  model,
+  output,
+  signal,
+} from '@angular/core';
 
 /** Row height (size-touch, 56px) plus the gap between rows (space-2, 8px). */
 const ROW = 64;
 
-/** A shop's categories in walking order: drag a grip (or press ↑/↓ on it) to reorder, × to remove. */
+/** A shop's categories in walking order: drag a grip (or press ↑/↓ on it) to reorder, edit a name to rename, × twice to delete. */
 @Component({
   selector: 'app-category-list',
   templateUrl: './category-list.html',
@@ -14,6 +25,13 @@ export class CategoryList {
   readonly categories = model.required<string[]>();
   readonly label = input('Category order');
   readonly emptyText = input('No categories yet. Add one below.');
+  /** Delete this category, confirmed by a second tap on ×. */
+  readonly remove = output<string>();
+  readonly rename = output<{ from: string; to: string }>();
+
+  /** The category whose × waits for its second tap. */
+  protected readonly confirming = signal<string | null>(null);
+  private confirmTimer?: ReturnType<typeof setTimeout>;
 
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly injector = inject(Injector);
@@ -81,8 +99,23 @@ export class CategoryList {
     });
   }
 
-  protected remove(name: string): void {
-    this.categories.set(this.categories().filter((c) => c !== name));
+  /** × asks for a second tap within 4 s, then emits remove. */
+  protected tapRemove(name: string): void {
+    clearTimeout(this.confirmTimer);
+    if (this.confirming() === name) {
+      this.confirming.set(null);
+      this.remove.emit(name);
+      return;
+    }
+    this.confirming.set(name);
+    this.confirmTimer = setTimeout(() => this.confirming.set(null), 4000);
+  }
+
+  /** Emits the new name and puts the bound one back: the parent's refetch shows what was saved. */
+  protected changeName(from: string, field: HTMLInputElement): void {
+    const to = field.value.trim();
+    field.value = from;
+    if (to !== from) this.rename.emit({ from, to });
   }
 
   private move(from: number, to: number): void {

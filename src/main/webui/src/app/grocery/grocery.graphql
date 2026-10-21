@@ -94,3 +94,13 @@ mutation AddCategory($name: String!) {
     id
   }
 }
+
+mutation RenameCategory($id: String!, $name: String!) {
+  renameCategory(id: $id, name: $name) {
+    id
+  }
+}
+
+mutation DeleteCategory($id: String!) {
+  deleteCategory(id: $id)
+}

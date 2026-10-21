@@ -69,10 +69,21 @@
 .name {
   flex: 1;
   min-width: 0;
+  height: 40px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
   font-size: 18px;
   line-height: 24px;
   font-weight: 700;
-  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+}
+
+.name:focus {
+  background: var(--surface-raised);
 }
 
 .remove {
@@ -94,7 +105,14 @@
   color: var(--danger);
 }
 
+/* Waiting for the second tap */
+.remove.confirm {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
 .handle:focus-visible,
+.name:focus-visible,
 .remove:focus-visible {
   outline: 3px solid var(--ink);
   outline-offset: 2px;

@@ -1,5 +1,7 @@
 package io.github.gaetancollaud.restok.category;
 
+import io.github.gaetancollaud.restok.product.ProductClassification;
+import io.github.gaetancollaud.restok.product.ProductRepository;
 import io.github.gaetancollaud.restok.shop.ShopCategoryRepository;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -20,6 +22,9 @@ public class CategoryGraphQLApi {
 
     @Inject
     ShopCategoryRepository orderRepository;
+
+    @Inject
+    ProductRepository productRepository;
 
     @Query("categories")
     public @NonNull List<@NonNull ProductCategory> categories() {
@@ -49,7 +54,8 @@ public class CategoryGraphQLApi {
     @Mutation
     @Transactional
     public @NonNull UUID deleteCategory(@NonNull UUID id) throws GraphQLException {
-        // FKs: products in it become uncategorized, shop orders drop it
+        // FKs: products in it become uncategorized, shop orders drop it; the status shows the red dot again
+        productRepository.update("classification = ?1 where category.id = ?2", ProductClassification.UNCLASSIFIED, id);
         if (!repository.deleteById(id)) {
             throw new GraphQLException("category not found");
         }

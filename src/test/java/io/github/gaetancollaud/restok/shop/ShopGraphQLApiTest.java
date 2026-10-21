@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static io.github.gaetancollaud.restok.GraphQL.post;
 import static org.hamcrest.Matchers.contains;
@@ -57,8 +58,15 @@ public class ShopGraphQLApiTest {
         return post("{ categories { id name } }").extract().path("data.categories.find { it.name == '" + name + "' }.id");
     }
 
-    public static void setOrder(String shopId, String... categoryNames) {
-        List<String> ids = List.of(categoryNames).stream().map(ShopGraphQLApiTest::categoryId).toList();
+    /** Every category name: the given ones first, then the rest sorted by name. */
+    public static List<String> full(String... first) {
+        List<String> byName = post("{ categories { name } }").extract().path("data.categories.name");
+        return Stream.concat(Stream.of(first), byName.stream().filter(n -> !List.of(first).contains(n))).toList();
+    }
+
+    /** Sets a full order starting with the given categories. */
+    public static void setOrder(String shopId, String... first) {
+        List<String> ids = full(first).stream().map(ShopGraphQLApiTest::categoryId).toList();
         post(SET_ORDER, Map.of("id", shopId, "ids", ids)).body("errors", nullValue());
     }
 
@@ -82,12 +90,13 @@ public class ShopGraphQLApiTest {
     }
 
     @Test
-    void addTrimsNameWithEmptyOrder() {
-        post(ADD, Map.of("name", " Coop ", "lat", 46.52, "lon", 6.63))
+    void addTrimsNameWithEveryCategoryByName() {
+        List<String> order = post(ADD, Map.of("name", " Coop ", "lat", 46.52, "lon", 6.63))
                 .body("errors", nullValue())
                 .body("data.addShop.id", notNullValue())
                 .body("data.addShop.name", is("Coop"))
-                .body("data.addShop.categoryOrder", empty());
+                .extract().path("data.addShop.categoryOrder.name");
+        assertEquals(full(), order);
     }
 
     @Test
@@ -155,13 +164,22 @@ public class ShopGraphQLApiTest {
     @Test
     void setOrderReplacesWholeOrder() {
         String id = addShop("Coop");
-        post(SET_ORDER, Map.of("id", id, "ids", List.of(categoryId("Pain"), categoryId("Fruits"))))
+        List<String> ids = full("Pain", "Fruits").stream().map(ShopGraphQLApiTest::categoryId).toList();
+        List<String> order = post(SET_ORDER, Map.of("id", id, "ids", ids))
                 .body("errors", nullValue())
-                .body("data.setShopCategoryOrder.categoryOrder.name", contains("Pain", "Fruits"));
+                .extract().path("data.setShopCategoryOrder.categoryOrder.name");
+        assertEquals(full("Pain", "Fruits"), order);
         setOrder(id, "Fromage");
-        assertEquals(List.of("Fromage"), orderOf(id));
-        setOrder(id);
-        assertEquals(List.of(), orderOf(id));
+        assertEquals(full("Fromage"), orderOf(id));
+    }
+
+    @Test
+    void partialOrderIsRejected() {
+        String id = addShop("Coop");
+        setOrder(id, "Pain", "Fruits");
+        post(SET_ORDER, Map.of("id", id, "ids", List.of(categoryId("Fruits"), categoryId("Pain"))))
+                .body("errors[0].message", is("order must contain every category"));
+        assertEquals(full("Pain", "Fruits"), orderOf(id));
     }
 
     @Test
@@ -170,8 +188,8 @@ public class ShopGraphQLApiTest {
         String b = addShop("B");
         setOrder(a, "Pain", "Fruits");
         setOrder(b, "Fruits", "Pain");
-        assertEquals(List.of("Pain", "Fruits"), orderOf(a));
-        assertEquals(List.of("Fruits", "Pain"), orderOf(b));
+        assertEquals(full("Pain", "Fruits"), orderOf(a));
+        assertEquals(full("Fruits", "Pain"), orderOf(b));
     }
 
     @Test
@@ -181,7 +199,7 @@ public class ShopGraphQLApiTest {
         String bread = categoryId("Pain");
         post(SET_ORDER, Map.of("id", id, "ids", List.of(bread, bread))).body("errors[0].message", is("duplicate category in order"));
         post(SET_ORDER, Map.of("id", id, "ids", List.of(bread, UUID.randomUUID().toString()))).body("errors[0].message", is("category not found"));
-        assertEquals(List.of("Pain", "Fruits"), orderOf(id));
+        assertEquals(full("Pain", "Fruits"), orderOf(id));
     }
 
     @Test
@@ -190,6 +208,6 @@ public class ShopGraphQLApiTest {
         String spices = post("mutation { addCategory(name: \"Spices\") { id } }").extract().path("data.addCategory.id");
         setOrder(id, "Pain", "Spices", "Fruits");
         post("mutation($id: String!) { deleteCategory(id: $id) }", Map.of("id", spices)).body("errors", nullValue());
-        assertEquals(List.of("Pain", "Fruits"), orderOf(id));
+        assertEquals(full("Pain", "Fruits"), orderOf(id));
     }
 }
