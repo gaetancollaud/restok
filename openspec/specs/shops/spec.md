@@ -136,7 +136,7 @@ Each row of the Shops panel's aisle order SHALL have a × button that deletes th
 - **THEN** "Fruits" is gone from `categories` and from every shop's order, and "apple" has no category
 
 ### Requirement: Rename a category from the Shops panel
-The category name in each row of the Shops panel's aisle order SHALL be editable. The new name SHALL be saved with `renameCategory` when the field changes (blur or Enter), and SHALL show in every shop and on products. A rejected name (blank or duplicate) SHALL show the error and restore the saved name.
+The category name in each row of the Shops panel's aisle order SHALL be editable. The new name SHALL be saved with `updateCategory` when the field changes (blur or Enter), and SHALL show in every shop and on products. A rejected name (blank or duplicate) SHALL show the error and restore the saved name.
 
 #### Scenario: Rename everywhere
 - **WHEN** the user edits "Pain" to "Boulangerie" in Coop's panel and presses Enter

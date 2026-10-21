@@ -66,6 +66,7 @@
     [categories]="categories()"
     (shopChange)="setShop(item.id, $event)"
     (categoryChange)="setCategory(item.id, $event)"
+    (nameChange)="rename(item.id, $event)"
     (removed)="remove(item.id)"
     (closed)="selectedId.set(null)"
   />

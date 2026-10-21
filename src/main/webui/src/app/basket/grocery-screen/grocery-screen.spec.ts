@@ -261,7 +261,7 @@ describe('GroceryScreen', () => {
       );
       await fixture.whenStable();
       const popup = el.querySelector('app-product-popup')!;
-      expect(popup.querySelector('h2')!.textContent).toBe('Tomatoes');
+      expect(popup.querySelector<HTMLInputElement>('input[aria-label="Name"]')!.value).toBe('Tomatoes');
       const shopSelect = popup.querySelector<HTMLSelectElement>(
         'select[aria-label="Buy only at"]',
       )!;
@@ -331,6 +331,24 @@ describe('GroceryScreen', () => {
         { id: '1', categoryId: null },
       ]);
     });
+  });
+
+  it('renames an item from its popup, and the tile follows', async () => {
+    const fixture = await render();
+    const el = fixture.nativeElement as HTMLElement;
+    const changes: unknown[] = [];
+    fixture.componentInstance.productChange.subscribe((c) => changes.push(c));
+    el.querySelector('[aria-label="To buy"] [aria-label^="Tomatoes,"]')!.dispatchEvent(
+      new MouseEvent('contextmenu', { cancelable: true }),
+    );
+    await fixture.whenStable();
+    const field = el.querySelector<HTMLInputElement>('app-product-popup input[aria-label="Name"]')!;
+    field.value = 'Cherry tomatoes';
+    field.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(changes).toEqual([{ id: '1', name: 'Cherry tomatoes' }]);
+    expect(field.value).toBe('Cherry tomatoes');
+    expect(tiles(el, 'To buy')).toContain('Cherry tomatoes');
   });
 
   it('deletes an item from its popup, To buy or Bought', async () => {

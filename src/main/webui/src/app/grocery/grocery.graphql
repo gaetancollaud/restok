@@ -35,28 +35,17 @@ mutation AddProduct($name: String!) {
   }
 }
 
-mutation SetProductBought($id: String!, $bought: Boolean!) {
-  setProductBought(id: $id, bought: $bought) {
+mutation UpdateProduct($id: String!, $input: ProductUpdateInput!) {
+  updateProduct(id: $id, input: $input) {
     id
+    name
     bought
     boughtAt
-  }
-}
-
-mutation SetProductCategory($id: String!, $categoryId: String) {
-  setProductCategory(id: $id, categoryId: $categoryId) {
-    id
     classification
     category {
       id
       name
     }
-  }
-}
-
-mutation SetProductShop($id: String!, $shopId: String) {
-  setProductShop(id: $id, shopId: $shopId) {
-    id
     shop {
       id
     }
@@ -95,8 +84,8 @@ mutation AddCategory($name: String!) {
   }
 }
 
-mutation RenameCategory($id: String!, $name: String!) {
-  renameCategory(id: $id, name: $name) {
+mutation UpdateCategory($id: String!, $input: CategoryUpdateInput!) {
+  updateCategory(id: $id, input: $input) {
     id
   }
 }

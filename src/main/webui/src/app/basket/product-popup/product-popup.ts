@@ -26,6 +26,8 @@ export class ProductPopup {
   readonly categoryChange = output<string | null>();
   /** The only shop to buy it at, or null for any shop. */
   readonly shopChange = output<string | null>();
+  /** A new name, trimmed; never blank or unchanged. */
+  readonly nameChange = output<string>();
   /** Closed by the button, Escape or the backdrop. */
   readonly closed = output<void>();
   /** Delete confirmed with a second tap; the popup closes itself. */
@@ -58,6 +60,13 @@ export class ProductPopup {
     // Close first: the parent drops this popup when it handles removed
     this.close();
     this.removed.emit();
+  }
+
+  /** Emits the new name and puts the bound one back: the parent's update shows what was saved. */
+  protected rename(field: HTMLInputElement): void {
+    const name = field.value.trim();
+    field.value = this.item().name;
+    if (name && name !== this.item().name) this.nameChange.emit(name);
   }
 
   /** A click on the backdrop lands on the dialog itself, outside its content box. */

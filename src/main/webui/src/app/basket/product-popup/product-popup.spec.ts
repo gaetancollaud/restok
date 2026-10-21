@@ -22,6 +22,8 @@ describe('ProductPopup', () => {
     const categoryChanges: (string | null)[] = [];
     fixture.componentInstance.shopChange.subscribe((v) => changes.push(v));
     fixture.componentInstance.categoryChange.subscribe((v) => categoryChanges.push(v));
+    const names: string[] = [];
+    fixture.componentInstance.nameChange.subscribe((v) => names.push(v));
     const el = fixture.nativeElement as HTMLElement;
     const shopSelect = () =>
       el.querySelector<HTMLSelectElement>('select[aria-label="Buy only at"]')!;
@@ -31,8 +33,16 @@ describe('ProductPopup', () => {
       select.value = value;
       select.dispatchEvent(new Event('change'));
     };
-    return { el, changes, categoryChanges, shopSelect, categorySelect, pick };
+    return { el, changes, categoryChanges, names, shopSelect, categorySelect, pick };
   }
+
+  /** Types into the name field and commits it, as Enter or leaving the field does. */
+  const typeName = (el: HTMLElement, value: string) => {
+    const field = el.querySelector<HTMLInputElement>('input[aria-label="Name"]')!;
+    field.value = value;
+    field.dispatchEvent(new Event('change'));
+    return field;
+  };
 
   const options = (select: HTMLSelectElement) =>
     Array.from(select.options).map((o) => o.text.trim());
@@ -46,7 +56,8 @@ describe('ProductPopup', () => {
       status: 'CLASSIFIED',
     });
     expect(el.querySelector('dialog')!.open).toBe(true);
-    expect(el.querySelector('h2')!.textContent).toBe('Parmesan');
+    expect(el.querySelector<HTMLInputElement>('input[aria-label="Name"]')!.value).toBe('Parmesan');
+    expect(el.querySelector('dialog')!.getAttribute('aria-label')).toBe('Parmesan');
     expect(options(shopSelect())).toEqual(['Any shop', 'Coop', 'Lidl']);
     expect(shopSelect().value).toBe('');
   });
@@ -103,6 +114,21 @@ describe('ProductPopup', () => {
     const { el } = await render({ id: 'n123', name: 'Parmesan', status: 'PENDING' });
     expect(el.querySelector('select')).toBeNull();
     expect(el.querySelector('.danger')).toBeNull();
+    expect(el.querySelector('input[aria-label="Name"]')).toBeNull();
+    expect(el.querySelector('h2')!.textContent).toBe('Parmesan');
+  });
+
+  it('emits a changed name, trimmed', async () => {
+    const { el, names } = await render({ id: '1', name: 'tomatoe' });
+    typeName(el, ' tomato ');
+    expect(names).toEqual(['tomato']);
+  });
+
+  it('emits nothing for a blank or unchanged name, and shows the name again', async () => {
+    const { el, names } = await render({ id: '1', name: 'tomatoe' });
+    expect(typeName(el, '   ').value).toBe('tomatoe');
+    expect(typeName(el, ' tomatoe ').value).toBe('tomatoe');
+    expect(names).toEqual([]);
   });
 
   describe('delete', () => {

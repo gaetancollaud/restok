@@ -1,7 +1,19 @@
-<dialog #dialog class="popup" aria-labelledby="product-popup-title" (close)="closed.emit()" (click)="backdrop($event)">
+<dialog #dialog class="popup" [attr.aria-label]="item().name" (close)="closed.emit()" (click)="backdrop($event)">
   <div class="body">
     <header class="head">
-      <h2 id="product-popup-title" class="title">{{ item().name }}</h2>
+      @if (local()) {
+        <h2 class="title">{{ item().name }}</h2>
+      } @else {
+        <input
+          #name
+          class="title name"
+          aria-label="Name"
+          autocomplete="off"
+          enterkeyhint="done"
+          [value]="item().name"
+          (change)="rename(name)"
+        />
+      }
       <button type="button" class="iconbtn" aria-label="Close" (click)="close()">
         <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />

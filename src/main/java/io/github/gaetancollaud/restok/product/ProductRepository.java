@@ -13,6 +13,11 @@ public class ProductRepository implements PanacheRepositoryBase<Product, UUID> {
         return list("from Product p left join fetch p.category order by p.name");
     }
 
+    /** Whether a product other than {@code self} has this name, ignoring case. */
+    public boolean nameTakenByOther(String name, UUID self) {
+        return count("lower(name) = lower(?1) and id <> ?2", name, self) > 0;
+    }
+
     /** Sorted by the category's position in the shop's order; unordered categories and uncategorized last. */
     public List<Product> listForShop(UUID shopId) {
         return list("""

@@ -5,6 +5,7 @@ import io.github.gaetancollaud.restok.TestDb;
 import io.github.gaetancollaud.restok.product.ProductGraphQLApiTest;
 import io.github.gaetancollaud.restok.shop.ShopGraphQLApiTest;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.response.ValidatableResponse;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static io.github.gaetancollaud.restok.GraphQL.post;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
@@ -31,7 +33,7 @@ class CategoryGraphQLApiTest {
 
     static final String LIST = "{ categories { id name } }";
     static final String ADD = "mutation($name: String!) { addCategory(name: $name) { id name } }";
-    static final String RENAME = "mutation($id: String!, $name: String!) { renameCategory(id: $id, name: $name) { id name } }";
+    static final String UPDATE = "mutation($id: String!, $input: CategoryUpdateInput!) { updateCategory(id: $id, input: $input) { id name } }";
     static final String DELETE = "mutation($id: String!) { deleteCategory(id: $id) }";
 
     @Inject
@@ -82,30 +84,48 @@ class CategoryGraphQLApiTest {
         post(LIST).body("data.categories", hasSize(TestDb.DEFAULT_CATEGORIES.size()));
     }
 
+    ValidatableResponse update(String id, Map<String, Object> input) {
+        return post(UPDATE, Map.of("id", id, "input", input));
+    }
+
     @Test
     void renameKeepsId() {
         String id = add("Spices");
-        post(RENAME, Map.of("id", id, "name", " Herbs "))
+        update(id, Map.of("name", " Herbs "))
                 .body("errors", nullValue())
-                .body("data.renameCategory.id", is(id))
-                .body("data.renameCategory.name", is("Herbs"));
+                .body("data.updateCategory.id", is(id))
+                .body("data.updateCategory.name", is("Herbs"));
         // changing only the case of its own name is allowed
-        post(RENAME, Map.of("id", id, "name", "HERBS")).body("data.renameCategory.name", is("HERBS"));
+        update(id, Map.of("name", "HERBS")).body("data.updateCategory.name", is("HERBS"));
         post(LIST).body("data.categories.name", hasItem("HERBS")).body("data.categories.name", not(hasItems("Spices", "Herbs")));
+    }
+
+    @Test
+    void emptyInputChangesNothing() {
+        String id = add("Spices");
+        update(id, Map.of()).body("errors", nullValue()).body("data.updateCategory.name", is("Spices"));
     }
 
     @Test
     void renameToExistingNameIsRejected() {
         String id = add("Spices");
-        post(RENAME, Map.of("id", id, "name", "pain")).body("errors[0].message", is("category name already exists"));
+        update(id, Map.of("name", "pain")).body("errors[0].message", is("category name already exists"));
+        update(id, Map.of("name", "  ")).body("errors[0].message", is("name must not be blank"));
         post(LIST).body("data.categories.name", hasItem("Spices"));
     }
 
     @Test
     void unknownIdIsRejected() {
         String unknown = UUID.randomUUID().toString();
-        post(RENAME, Map.of("id", unknown, "name", "x")).body("errors[0].message", is("category not found"));
+        update(unknown, Map.of("name", "x")).body("errors[0].message", is("category not found"));
         post(DELETE, Map.of("id", unknown)).body("errors[0].message", is("category not found"));
+    }
+
+    @Test
+    void renameCategoryIsGone() {
+        String id = add("Spices");
+        post("mutation($id: String!) { renameCategory(id: $id, name: \"x\") { id } }", Map.of("id", id))
+                .body("errors[0].message", containsString("renameCategory"));
     }
 
     @Test

@@ -44,10 +44,12 @@ public class CategoryGraphQLApi {
 
     @Mutation
     @Transactional
-    public @NonNull ProductCategory renameCategory(@NonNull UUID id, @NonNull String name) throws GraphQLException {
+    public @NonNull ProductCategory updateCategory(@NonNull UUID id, @NonNull CategoryUpdate input) throws GraphQLException {
         ProductCategory category = repository.findByIdOptional(id)
                 .orElseThrow(() -> new GraphQLException("category not found"));
-        category.name = validName(name, id);
+        if (input.name != null) {
+            category.name = validName(input.name, id);
+        }
         return category;
     }
 

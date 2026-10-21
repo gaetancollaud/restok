@@ -2,6 +2,7 @@ package io.github.gaetancollaud.restok.product;
 
 import io.github.gaetancollaud.restok.category.ProductCategory;
 import io.github.gaetancollaud.restok.category.ProductCategoryRepository;
+import io.github.gaetancollaud.restok.shop.Shop;
 import io.github.gaetancollaud.restok.shop.ShopRepository;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.vertx.core.eventbus.EventBus;
@@ -15,6 +16,7 @@ import org.eclipse.microprofile.graphql.Query;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @GraphQLApi
@@ -58,42 +60,33 @@ public class ProductGraphQLApi {
         return product;
     }
 
-    @Mutation("setProductBought") // without the name, SmallRye strips the "set" prefix
+    @Mutation("updateProduct")
     @Transactional
-    public @NonNull Product setProductBought(@NonNull UUID id, boolean bought) throws GraphQLException {
+    public @NonNull Product updateProduct(@NonNull UUID id, @NonNull ProductUpdate input) throws GraphQLException {
         Product product = find(id);
-        if (product.bought != bought) {
-            product.bought = bought;
-            product.boughtAt = bought ? Instant.now() : null;
-        }
-        return product;
-    }
-
-    @Mutation("setProductCategory")
-    @Transactional
-    public @NonNull Product setProductCategory(@NonNull UUID id, UUID categoryId) throws GraphQLException {
-        Product product = find(id);
-        if (categoryId == null) {
-            product.category = null;
-            product.classification = ProductClassification.UNCLASSIFIED;
-            return product;
-        }
-        ProductCategory category = categoryRepository.findByIdOptional(categoryId)
+        // Resolve every field before assigning any: a GraphQLException is checked, so it doesn't roll back
+        String name = input.name == null ? null : validName(input.name, id);
+        ProductCategory category = input.categoryId == null || input.categoryId.isEmpty() ? null
+                : uuid(input.categoryId).flatMap(categoryRepository::findByIdOptional)
                 .orElseThrow(() -> new GraphQLException("category not found"));
-        product.category = category;
-        product.classification = ProductClassification.CLASSIFIED;
-        return product;
-    }
+        Shop shop = input.shopId == null || input.shopId.isEmpty() ? null
+                : uuid(input.shopId).flatMap(shopRepository::findByIdOptional)
+                .orElseThrow(() -> new GraphQLException("shop not found"));
 
-    @Mutation("setProductShop")
-    @Transactional
-    public @NonNull Product setProductShop(@NonNull UUID id, UUID shopId) throws GraphQLException {
-        Product product = find(id);
-        if (shopId == null) {
-            product.shop = null;
-            return product;
+        if (name != null) {
+            product.name = name;
         }
-        product.shop = shopRepository.findByIdOptional(shopId).orElseThrow(() -> new GraphQLException("shop not found"));
+        if (input.bought != null && product.bought != input.bought) {
+            product.bought = input.bought;
+            product.boughtAt = input.bought ? Instant.now() : null;
+        }
+        if (input.categoryId != null) {
+            product.category = category;
+            product.classification = category == null ? ProductClassification.UNCLASSIFIED : ProductClassification.CLASSIFIED;
+        }
+        if (input.shopId != null) {
+            product.shop = shop;
+        }
         return product;
     }
 
@@ -108,5 +101,27 @@ public class ProductGraphQLApi {
 
     private Product find(UUID id) throws GraphQLException {
         return repository.findByIdOptional(id).orElseThrow(() -> new GraphQLException("product not found"));
+    }
+
+    /** Trimmed name, rejected when blank or used by another product (ignoring case). */
+    private String validName(String name, UUID self) throws GraphQLException {
+        String trimmed = name.strip();
+        if (trimmed.isEmpty()) {
+            throw new GraphQLException("name must not be blank");
+        }
+        // ponytail: check-then-update race can leave two products with one name; a unique index on lower(name) closes it
+        if (repository.nameTakenByOther(trimmed, self)) {
+            throw new GraphQLException("product name already exists");
+        }
+        return trimmed;
+    }
+
+    /** Empty for a malformed id, so it is reported like an unknown one. */
+    private static Optional<UUID> uuid(String id) {
+        try {
+            return Optional.of(UUID.fromString(id));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 }

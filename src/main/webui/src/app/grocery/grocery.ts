@@ -13,11 +13,10 @@ import {
   DeleteShopGQL,
   GroceryGQL,
   GroceryQuery,
-  RenameCategoryGQL,
-  SetProductBoughtGQL,
-  SetProductCategoryGQL,
-  SetProductShopGQL,
+  ProductUpdateInput,
   SetShopCategoryOrderGQL,
+  UpdateCategoryGQL,
+  UpdateProductGQL,
   UpdateShopGQL,
 } from '../graphql/generated';
 
@@ -30,16 +29,14 @@ import {
 })
 export class Grocery {
   private readonly addGql = inject(AddProductGQL);
-  private readonly boughtGql = inject(SetProductBoughtGQL);
-  private readonly productShopGql = inject(SetProductShopGQL);
-  private readonly productCategoryGql = inject(SetProductCategoryGQL);
+  private readonly updateProductGql = inject(UpdateProductGQL);
   private readonly deleteProductGql = inject(DeleteProductGQL);
   private readonly addShopGql = inject(AddShopGQL);
   private readonly updateShopGql = inject(UpdateShopGQL);
   private readonly deleteShopGql = inject(DeleteShopGQL);
   private readonly orderGql = inject(SetShopCategoryOrderGQL);
   private readonly addCategoryGql = inject(AddCategoryGQL);
-  private readonly renameCategoryGql = inject(RenameCategoryGQL);
+  private readonly updateCategoryGql = inject(UpdateCategoryGQL);
   private readonly deleteCategoryGql = inject(DeleteCategoryGQL);
   private readonly groceryRef = inject(GroceryGQL).watch();
 
@@ -108,17 +105,26 @@ export class Grocery {
       : this.groceryRef.stopPolling(),
   );
 
-  protected setBought(change: { id: string; bought: boolean }): void {
-    // The response updates the cached product, which re-renders the screen
-    this.run(this.boughtGql.mutate({ variables: change }));
+  protected setBought({ id, bought }: { id: string; bought: boolean }): void {
+    this.update(id, { bought });
   }
 
-  protected setProductShop(change: { id: string; shopId: string | null }): void {
-    this.run(this.productShopGql.mutate({ variables: change }));
+  /** "" tells the server to clear it. */
+  protected setProductShop({ id, shopId }: { id: string; shopId: string | null }): void {
+    this.update(id, { shopId: shopId ?? '' });
   }
 
-  protected setProductCategory(change: { id: string; categoryId: string | null }): void {
-    this.run(this.productCategoryGql.mutate({ variables: change }));
+  protected setProductCategory({ id, categoryId }: { id: string; categoryId: string | null }): void {
+    this.update(id, { categoryId: categoryId ?? '' });
+  }
+
+  protected updateProduct({ id, ...input }: { id: string; name: string }): void {
+    this.update(id, input);
+  }
+
+  /** The response carries every product field, so it updates the cached product, which re-renders the screen. */
+  private update(id: string, input: ProductUpdateInput): void {
+    this.run(this.updateProductGql.mutate({ variables: { id, input } }));
   }
 
   protected removeProduct(id: string): void {
@@ -170,7 +176,7 @@ export class Grocery {
   }
 
   protected renameCategory({ from, to }: { from: string; to: string }): void {
-    this.save(this.renameCategoryGql.mutate({ variables: { id: this.categoryId(from), name: to } }));
+    this.save(this.updateCategoryGql.mutate({ variables: { id: this.categoryId(from), input: { name: to } } }));
   }
 
   /** Deletes the category everywhere; its products become uncategorized. */

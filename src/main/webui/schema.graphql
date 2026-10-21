@@ -6,11 +6,9 @@ type Mutation {
   deleteCategory(id: String!): String!
   deleteProduct(id: String!): String!
   deleteShop(id: String!): String!
-  renameCategory(id: String!, name: String!): ProductCategory!
-  setProductBought(bought: Boolean!, id: String!): Product!
-  setProductCategory(categoryId: String, id: String!): Product!
-  setProductShop(id: String!, shopId: String): Product!
   setShopCategoryOrder(categoryIds: [String!]!, shopId: String!): Shop!
+  updateCategory(id: String!, input: CategoryUpdateInput!): ProductCategory!
+  updateProduct(id: String!, input: ProductUpdateInput!): Product!
   updateShop(id: String!, latitude: Float, longitude: Float, name: String!): Shop!
 }
 
@@ -60,3 +58,14 @@ scalar BigInteger
 
 "Scalar for DateTime"
 scalar DateTime
+
+input CategoryUpdateInput {
+  name: String
+}
+
+input ProductUpdateInput {
+  bought: Boolean
+  categoryId: String
+  name: String
+  shopId: String
+}

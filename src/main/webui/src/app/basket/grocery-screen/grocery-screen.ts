@@ -59,6 +59,8 @@ export class GroceryScreen {
   readonly shopChange = output<{ id: string; shopId: string | null }>();
   /** An item's category picked by hand, or cleared (null). */
   readonly categoryChange = output<{ id: string; categoryId: string | null }>();
+  /** An item's fields edited in its popup; only the name for now. */
+  readonly productChange = output<{ id: string; name: string }>();
   /** An item deleted for good from its popup. */
   readonly productRemoved = output<string>();
 
@@ -104,6 +106,11 @@ export class GroceryScreen {
       ),
     );
     this.categoryChange.emit({ id, categoryId });
+  }
+
+  protected rename(id: string, name: string): void {
+    this.state.update((items) => items.map((x) => (x.id === id ? { ...x, name } : x)));
+    this.productChange.emit({ id, name });
   }
 
   protected remove(id: string): void {

@@ -6,11 +6,9 @@ import {
   AddShopDocument,
   DeleteCategoryDocument,
   GroceryDocument,
-  RenameCategoryDocument,
-  SetProductBoughtDocument,
-  SetProductCategoryDocument,
-  SetProductShopDocument,
   SetShopCategoryOrderDocument,
+  UpdateCategoryDocument,
+  UpdateProductDocument,
   UpdateShopDocument,
 } from '../graphql/generated';
 import { Grocery } from './grocery';
@@ -121,13 +119,9 @@ describe('Grocery', () => {
     const tile = el.querySelector<HTMLButtonElement>('[aria-label="apple, Fruits, tap twice to mark as bought"]')!;
     tile.click();
     tile.click();
-    const op = controller.expectOne(SetProductBoughtDocument);
-    expect(op.operation.variables).toEqual({ id: '1', bought: true });
-    op.flush({
-      data: {
-        setProductBought: { __typename: 'Product', id: '1', bought: true, boughtAt: '2026-10-17T10:00:00Z' },
-      },
-    });
+    const op = controller.expectOne(UpdateProductDocument);
+    expect(op.operation.variables).toEqual({ id: '1', input: { bought: true } });
+    op.flush({ data: { updateProduct: { ...apple, bought: true, boughtAt: '2026-10-17T10:00:00Z' } } });
     await fixture.whenStable();
     expect(toBuy(el)).toEqual(['baguette']);
     expect(el.querySelector('[aria-label="Add apple again, Fruits"]')).not.toBeNull();
@@ -148,9 +142,9 @@ describe('Grocery', () => {
     const pick = async (value: string, shop: unknown) => {
       select.value = value;
       select.dispatchEvent(new Event('change'));
-      const op = controller.expectOne(SetProductShopDocument);
-      expect(op.operation.variables).toEqual({ id: '1', shopId: value || null });
-      op.flush({ data: { setProductShop: { __typename: 'Product', id: '1', shop } } });
+      const op = controller.expectOne(UpdateProductDocument);
+      expect(op.operation.variables).toEqual({ id: '1', input: { shopId: value } });
+      op.flush({ data: { updateProduct: { ...apple, shop } } });
       await fixture.whenStable();
     };
 
@@ -174,9 +168,9 @@ describe('Grocery', () => {
     const pick = async (value: string, cat: unknown, classification: string) => {
       select.value = value;
       select.dispatchEvent(new Event('change'));
-      const op = controller.expectOne(SetProductCategoryDocument);
-      expect(op.operation.variables).toEqual({ id: '1', categoryId: value || null });
-      op.flush({ data: { setProductCategory: { __typename: 'Product', id: '1', classification, category: cat } } });
+      const op = controller.expectOne(UpdateProductDocument);
+      expect(op.operation.variables).toEqual({ id: '1', input: { categoryId: value } });
+      op.flush({ data: { updateProduct: { ...apple, classification, category: cat } } });
       await fixture.whenStable();
     };
 
@@ -186,6 +180,36 @@ describe('Grocery', () => {
     await pick('', null, 'UNCLASSIFIED');
     expect(toBuy(el)).toEqual(['baguette', 'apple']);
     expect(el.querySelector('[aria-label="apple, no category, tap twice to mark as bought"]')).not.toBeNull();
+  });
+
+  describe('rename from the popup', () => {
+    async function rename(name: string) {
+      const fixture = await render();
+      const el = fixture.nativeElement as HTMLElement;
+      el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!
+        .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+      await fixture.whenStable();
+      const field = el.querySelector<HTMLInputElement>('app-product-popup input[aria-label="Name"]')!;
+      field.value = name;
+      field.dispatchEvent(new Event('change'));
+      const op = controller.expectOne(UpdateProductDocument);
+      expect(op.operation.variables).toEqual({ id: '1', input: { name } });
+      return { fixture, el, op };
+    }
+
+    it('saves the new name', async () => {
+      const { fixture, el, op } = await rename('pomme');
+      op.flush({ data: { updateProduct: { ...apple, name: 'pomme' } } });
+      await fixture.whenStable();
+      expect(toBuy(el)).toEqual(['baguette', 'pomme']);
+    });
+
+    it('shows the error when the name is taken', async () => {
+      const { fixture, el, op } = await rename('baguette');
+      op.flush({ errors: [{ message: 'product name already exists' }] });
+      await fixture.whenStable();
+      expect(el.querySelector('.error')!.textContent).toContain('product name already exists');
+    });
   });
 
   it('adds a new product and refetches', async () => {
@@ -286,9 +310,9 @@ describe('Grocery', () => {
       const field = el.querySelector<HTMLInputElement>('[aria-label="Name of Pain"]')!;
       field.value = 'Boulangerie';
       field.dispatchEvent(new Event('change'));
-      const op = controller.expectOne(RenameCategoryDocument);
-      expect(op.operation.variables).toEqual({ id: 'Pain', name: 'Boulangerie' });
-      op.flush({ data: { renameCategory: { __typename: 'ProductCategory', id: 'Pain' } } });
+      const op = controller.expectOne(UpdateCategoryDocument);
+      expect(op.operation.variables).toEqual({ id: 'Pain', input: { name: 'Boulangerie' } });
+      op.flush({ data: { updateCategory: { __typename: 'ProductCategory', id: 'Pain' } } });
       await refetch([coop]);
       await fixture.whenStable();
     });

@@ -3,6 +3,7 @@ package io.github.gaetancollaud.restok.product;
 import io.agroal.api.AgroalDataSource;
 import io.github.gaetancollaud.restok.TestDb;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.response.ValidatableResponse;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import static io.github.gaetancollaud.restok.shop.ShopGraphQLApiTest.addShop;
 import static io.github.gaetancollaud.restok.shop.ShopGraphQLApiTest.categoryId;
 import static io.github.gaetancollaud.restok.shop.ShopGraphQLApiTest.setOrder;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
@@ -30,9 +32,7 @@ public class ProductGraphQLApiTest {
     static final String FIELDS = "{ id name bought boughtAt classification category { name } shop { name } }";
     static final String LIST = "query($shopId: String) { products(shopId: $shopId) " + FIELDS + " }";
     static final String ADD = "mutation($name: String!) { addProduct(name: $name) " + FIELDS + " }";
-    static final String SET_BOUGHT = "mutation($id: String!, $b: Boolean!) { setProductBought(id: $id, bought: $b) " + FIELDS + " }";
-    static final String SET_CATEGORY = "mutation($id: String!, $c: String) { setProductCategory(id: $id, categoryId: $c) " + FIELDS + " }";
-    static final String SET_SHOP = "mutation($id: String!, $s: String) { setProductShop(id: $id, shopId: $s) " + FIELDS + " }";
+    static final String UPDATE = "mutation($id: String!, $input: ProductUpdateInput!) { updateProduct(id: $id, input: $input) " + FIELDS + " }";
     static final String DELETE = "mutation($id: String!) { deleteProduct(id: $id) }";
 
     @Inject
@@ -47,18 +47,18 @@ public class ProductGraphQLApiTest {
         return post(ADD, Map.of("name", name)).body("errors", nullValue()).extract().path("data.addProduct.id");
     }
 
-    public static void setCategory(String productId, String categoryName) {
-        Map<String, Object> vars = new HashMap<>();
-        vars.put("id", productId);
-        vars.put("c", categoryName == null ? null : categoryId(categoryName));
-        post(SET_CATEGORY, vars).body("errors", nullValue());
+    static ValidatableResponse update(String id, Map<String, Object> input) {
+        return post(UPDATE, Map.of("id", id, "input", input));
     }
 
+    /** A null category name clears it. */
+    public static void setCategory(String productId, String categoryName) {
+        update(productId, Map.of("categoryId", categoryName == null ? "" : categoryId(categoryName))).body("errors", nullValue());
+    }
+
+    /** A null shop lets it be bought anywhere. */
     public static void setShop(String productId, String shopId) {
-        Map<String, Object> vars = new HashMap<>();
-        vars.put("id", productId);
-        vars.put("s", shopId);
-        post(SET_SHOP, vars).body("errors", nullValue());
+        update(productId, Map.of("shopId", shopId == null ? "" : shopId)).body("errors", nullValue());
     }
 
     static Map<String, Object> shop(String shopId) {
@@ -120,25 +120,22 @@ public class ProductGraphQLApiTest {
     @Test
     void boughtCanBeCheckedAndUnchecked() {
         String id = addProduct("apple");
-        post(SET_BOUGHT, Map.of("id", id, "b", true)).body("data.setProductBought.bought", is(true))
-                .body("data.setProductBought.boughtAt", notNullValue());
-        post(SET_BOUGHT, Map.of("id", id, "b", false)).body("data.setProductBought.bought", is(false))
-                .body("data.setProductBought.boughtAt", nullValue());
+        update(id, Map.of("bought", true)).body("data.updateProduct.bought", is(true))
+                .body("data.updateProduct.boughtAt", notNullValue());
+        update(id, Map.of("bought", false)).body("data.updateProduct.bought", is(false))
+                .body("data.updateProduct.boughtAt", nullValue());
         post(LIST, shop(null)).body("data.products.bought", contains(false));
     }
 
     @Test
     void categoryCanBeSetAndCleared() {
         String id = addProduct("tomato");
-        post(SET_CATEGORY, Map.of("id", id, "c", categoryId("Légumes")))
-                .body("data.setProductCategory.category.name", is("Légumes"))
-                .body("data.setProductCategory.classification", is("CLASSIFIED"));
-        Map<String, Object> clear = new HashMap<>();
-        clear.put("id", id);
-        clear.put("c", null);
-        post(SET_CATEGORY, clear)
-                .body("data.setProductCategory.category", nullValue())
-                .body("data.setProductCategory.classification", is("UNCLASSIFIED"));
+        update(id, Map.of("categoryId", categoryId("Légumes")))
+                .body("data.updateProduct.category.name", is("Légumes"))
+                .body("data.updateProduct.classification", is("CLASSIFIED"));
+        update(id, Map.of("categoryId", ""))
+                .body("data.updateProduct.category", nullValue())
+                .body("data.updateProduct.classification", is("UNCLASSIFIED"));
     }
 
     @Test
@@ -146,10 +143,10 @@ public class ProductGraphQLApiTest {
         String lidl = addShop("Lidl");
         String parmesan = addProduct("parmesan");
         addProduct("apple");
-        post(SET_SHOP, Map.of("id", parmesan, "s", lidl)).body("data.setProductShop.shop.name", is("Lidl"));
+        update(parmesan, Map.of("shopId", lidl)).body("data.updateProduct.shop.name", is("Lidl"));
         post(LIST, shop(null)).body("data.products.find { it.name == 'parmesan' }.shop.name", is("Lidl"))
                 .body("data.products.find { it.name == 'apple' }.shop", nullValue());
-        setShop(parmesan, null);
+        update(parmesan, Map.of("shopId", "")).body("data.updateProduct.shop", nullValue());
         post(LIST, shop(null)).body("data.products.find { it.name == 'parmesan' }.shop", nullValue());
     }
 
@@ -157,18 +154,107 @@ public class ProductGraphQLApiTest {
     void unknownShopKeepsPreviousShop() {
         String parmesan = addProduct("parmesan");
         setShop(parmesan, addShop("Lidl"));
-        post(SET_SHOP, Map.of("id", parmesan, "s", UUID.randomUUID().toString())).body("errors[0].message", is("shop not found"));
+        update(parmesan, Map.of("shopId", UUID.randomUUID().toString())).body("errors[0].message", is("shop not found"));
         post(LIST, shop(null)).body("data.products[0].shop.name", is("Lidl"));
+    }
+
+    @Test
+    void severalFieldsAtOnce() {
+        String lidl = addShop("Lidl");
+        String parmesan = addProduct("parmesan");
+        update(parmesan, Map.of("bought", true, "shopId", lidl))
+                .body("errors", nullValue())
+                .body("data.updateProduct.bought", is(true))
+                .body("data.updateProduct.shop.name", is("Lidl"));
+    }
+
+    @Test
+    void emptyInputChangesNothing() {
+        String lidl = addShop("Lidl");
+        String apple = addProduct("apple");
+        update(apple, Map.of("categoryId", categoryId("Fruits"), "shopId", lidl, "bought", true));
+        update(apple, Map.of())
+                .body("errors", nullValue())
+                .body("data.updateProduct.name", is("apple"))
+                .body("data.updateProduct.bought", is(true))
+                .body("data.updateProduct.category.name", is("Fruits"))
+                .body("data.updateProduct.shop.name", is("Lidl"));
+    }
+
+    @Test
+    void oneInvalidFieldChangesNothing() {
+        String apple = addProduct("apple");
+        update(apple, Map.of("bought", true, "name", "pomme", "shopId", UUID.randomUUID().toString()))
+                .body("errors[0].message", is("shop not found"));
+        post(LIST, shop(null)).body("data.products[0].name", is("apple")).body("data.products[0].bought", is(false));
     }
 
     @Test
     void unknownIdsAreRejected() {
         String unknown = UUID.randomUUID().toString();
-        post(SET_BOUGHT, Map.of("id", unknown, "b", true)).body("errors[0].message", is("product not found"));
-        post(SET_CATEGORY, Map.of("id", unknown, "c", categoryId("Fruits"))).body("errors[0].message", is("product not found"));
-        post(SET_CATEGORY, Map.of("id", addProduct("apple"), "c", unknown)).body("errors[0].message", is("category not found"));
-        post(SET_SHOP, Map.of("id", unknown, "s", addShop("Lidl"))).body("errors[0].message", is("product not found"));
+        update(unknown, Map.of("bought", true)).body("errors[0].message", is("product not found"));
+        update(unknown, Map.of("categoryId", categoryId("Fruits"))).body("errors[0].message", is("product not found"));
+        String apple = addProduct("apple");
+        update(apple, Map.of("categoryId", unknown)).body("errors[0].message", is("category not found"));
+        update(apple, Map.of("categoryId", "not-a-uuid")).body("errors[0].message", is("category not found"));
+        update(unknown, Map.of("shopId", addShop("Lidl"))).body("errors[0].message", is("product not found"));
         post(DELETE, Map.of("id", unknown)).body("errors[0].message", is("product not found"));
+    }
+
+    @Test
+    void oldMutationsAreGone() {
+        String id = addProduct("apple");
+        post("mutation($id: String!) { setProductBought(id: $id, bought: true) { id } }", Map.of("id", id))
+                .body("errors[0].message", containsString("setProductBought"));
+        post("mutation($id: String!) { setProductCategory(id: $id, categoryId: null) { id } }", Map.of("id", id))
+                .body("errors[0].message", containsString("setProductCategory"));
+        post("mutation($id: String!) { setProductShop(id: $id, shopId: null) { id } }", Map.of("id", id))
+                .body("errors[0].message", containsString("setProductShop"));
+    }
+
+    @Test
+    void renameKeepsCategoryShopAndClassification() {
+        String coop = addShop("Coop");
+        String id = addProduct("tomatoe");
+        setCategory(id, "Légumes");
+        setShop(id, coop);
+        update(id, Map.of("name", " tomato "))
+                .body("errors", nullValue())
+                .body("data.updateProduct.name", is("tomato"));
+        post(LIST, shop(null))
+                .body("data.products[0].name", is("tomato"))
+                .body("data.products[0].category.name", is("Légumes"))
+                .body("data.products[0].classification", is("CLASSIFIED"))
+                .body("data.products[0].shop.name", is("Coop"));
+    }
+
+    @Test
+    void renameMayChangeOnlyTheCase() {
+        String id = addProduct("apple");
+        update(id, Map.of("name", "Apple")).body("errors", nullValue()).body("data.updateProduct.name", is("Apple"));
+    }
+
+    @Test
+    void nullNameKeepsTheName() {
+        String id = addProduct("apple");
+        Map<String, Object> input = new HashMap<>();
+        input.put("name", null);
+        update(id, input).body("errors", nullValue()).body("data.updateProduct.name", is("apple"));
+    }
+
+    @Test
+    void blankRenameIsRejected() {
+        String id = addProduct("apple");
+        update(id, Map.of("name", "  ")).body("errors[0].message", is("name must not be blank"));
+        post(LIST, shop(null)).body("data.products[0].name", is("apple"));
+    }
+
+    @Test
+    void renameToTakenNameIsRejected() {
+        addProduct("apple");
+        String aple = addProduct("aple");
+        update(aple, Map.of("name", "APPLE")).body("errors[0].message", is("product name already exists"));
+        post(LIST, shop(null)).body("data.products.name", contains("aple", "apple"));
     }
 
     @Test
