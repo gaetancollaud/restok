@@ -11,7 +11,7 @@ export class AddBar {
   /** Accessible names of the input and the + button. */
   readonly label = input('New item');
   readonly buttonLabel = input('Add item');
-  /** The trimmed name, on + or Enter; the bar then clears itself. */
+  /** The trimmed name, on + or Enter; the bar then clears and refocuses itself. */
   readonly add = output<string>();
 
   protected readonly text = signal('');
@@ -22,6 +22,8 @@ export class AddBar {
       this.add.emit(name);
       field.value = '';
       this.text.set('');
+      // back to the input after +, so several items can be added in a row
+      field.focus();
     }
   }
 }
