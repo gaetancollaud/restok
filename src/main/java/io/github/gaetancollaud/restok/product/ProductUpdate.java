@@ -8,6 +8,9 @@ public class ProductUpdate {
 
     public String name;
 
+    /** At least 1. */
+    public Integer quantity;
+
     public Boolean bought;
 
     /** "" removes the category. */

@@ -26,6 +26,19 @@
     @if (local()) {
       <p class="hint">Saving the product… try again in a moment.</p>
     } @else {
+      <h3 class="section">Quantity</h3>
+      <input
+        #quantity
+        class="qty"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        aria-label="Quantity"
+        enterkeyhint="done"
+        [value]="item().quantity ?? 1"
+        (change)="requantify(quantity)"
+      />
       <h3 class="section">Category</h3>
       <!-- ponytail: ShopSelect fits any { id, name } list -->
       <app-shop-select

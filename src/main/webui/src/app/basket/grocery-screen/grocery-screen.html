@@ -34,7 +34,7 @@
       @for (item of toBuy(); track item.id) {
         <app-item-tile
           [name]="item.name"
-          [meta]="item.meta"
+          [quantity]="item.quantity ?? 1"
           [status]="item.status"
           [category]="item.aisle"
           (press)="setBought(item.id, true)"
@@ -49,6 +49,7 @@
       @for (item of bought(); track item.id) {
         <app-item-tile
           [name]="item.name"
+          [quantity]="item.quantity ?? 1"
           variant="bought"
           [status]="item.status"
           [category]="item.aisle"
@@ -67,6 +68,7 @@
     (shopChange)="setShop(item.id, $event)"
     (categoryChange)="setCategory(item.id, $event)"
     (nameChange)="rename(item.id, $event)"
+    (quantityChange)="setQuantity(item.id, $event)"
     (removed)="remove(item.id)"
     (closed)="selectedId.set(null)"
   />

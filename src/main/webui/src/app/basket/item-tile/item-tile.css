@@ -47,12 +47,6 @@
   overflow-wrap: anywhere;
 }
 
-.meta {
-  font-size: 15px;
-  line-height: 20px;
-  color: var(--ink-muted);
-}
-
 /* Top row: light category name on the left, status dot on the right */
 .tile.has-top {
   padding-top: calc(var(--space-3) + 20px + var(--space-2));

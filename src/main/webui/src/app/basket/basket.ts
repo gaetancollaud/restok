@@ -20,8 +20,8 @@ export interface Item {
   id: string;
   /** Short noun in sentence case, e.g. "Tomatoes". */
   name: string;
-  /** Optional quantity, e.g. "2 ×" or "500 g". */
-  meta?: string;
+  /** How many to buy; unset means 1. */
+  quantity?: number;
   /** The category; matches one of a shop's aisles. */
   aisle?: string;
   categoryId?: string;
@@ -31,6 +31,27 @@ export interface Item {
   boughtAt?: number;
   /** The only shop to buy it at; unset means any shop. */
   shopId?: string;
+}
+
+/** A quantity word: 1 to 999, alone or with an x or × stuck to either side, e.g. "2", "2x", "x2". */
+const QUANTITY_WORD = /^[x×]?(\d{1,3})[x×]?$/i;
+
+/**
+ * Splits typed text into a name and a quantity read from its first or else its last word.
+ * Without one, or when nothing else would be left as the name, the quantity is 1 and the text stays whole.
+ */
+export function parseQuantity(text: string): { name: string; quantity: number } {
+  const words = text.trim().split(/\s+/);
+  if (words.length > 1) {
+    for (const [word, rest] of [
+      [words[0], words.slice(1)],
+      [words[words.length - 1], words.slice(0, -1)],
+    ] as const) {
+      const quantity = Number(QUANTITY_WORD.exec(word)?.[1]);
+      if (quantity >= 1) return { name: rest.join(' '), quantity };
+    }
+  }
+  return { name: text.trim(), quantity: 1 };
 }
 
 /** The shopId value for the "All shops" view: no shop filter, sorted by name. */

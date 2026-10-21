@@ -94,7 +94,7 @@ describe('GroceryScreen', () => {
   it('revives a bought item instead of adding a duplicate', async () => {
     const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
-    const added: string[] = [];
+    const added: unknown[] = [];
     fixture.componentInstance.added.subscribe((n) => added.push(n));
     const input = el.querySelector<HTMLInputElement>('input')!;
     const add = el.querySelector<HTMLButtonElement>('[aria-label="Add item"]')!;
@@ -112,8 +112,64 @@ describe('GroceryScreen', () => {
     input.dispatchEvent(new Event('input'));
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
-    expect(added).toEqual(['Oat milk']);
+    expect(added).toEqual([{ name: 'Oat milk', quantity: 1 }]);
     expect(input.value).toBe('');
+  });
+
+  describe('quantity', () => {
+    async function addText(fixture: Awaited<ReturnType<typeof render>>, text: string) {
+      const el = fixture.nativeElement as HTMLElement;
+      const input = el.querySelector<HTMLInputElement>('app-add-bar input')!;
+      input.value = text;
+      input.dispatchEvent(new Event('input'));
+      el.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await fixture.whenStable();
+    }
+
+    it('adds "2 apples" as apples ×2, shown as "2x apples"', async () => {
+      const fixture = await render();
+      const added: unknown[] = [];
+      fixture.componentInstance.added.subscribe((n) => added.push(n));
+      await addText(fixture, '2 apples');
+      expect(added).toEqual([{ name: 'apples', quantity: 2 }]);
+      expect(tiles(fixture.nativeElement, 'To buy')).toContain('2x apples');
+    });
+
+    it('re-adds a bought item with the typed quantity, and 1 without one', async () => {
+      const fixture = await render();
+      const el = fixture.nativeElement as HTMLElement;
+      const changes: unknown[] = [];
+      const added: unknown[] = [];
+      fixture.componentInstance.productChange.subscribe((c) => changes.push(c));
+      fixture.componentInstance.added.subscribe((n) => added.push(n));
+
+      await addText(fixture, '3 coffee');
+      expect(tiles(el, 'To buy')).toContain('3x Coffee');
+      await addText(fixture, 'coffee');
+      expect(tiles(el, 'To buy')).toContain('Coffee');
+      expect(changes).toEqual([
+        { id: '3', bought: false, quantity: 3 },
+        { id: '3', bought: false, quantity: 1 },
+      ]);
+      expect(added).toEqual([]);
+    });
+
+    it('sets the quantity from the popup, and the tile follows', async () => {
+      const fixture = await render();
+      const el = fixture.nativeElement as HTMLElement;
+      const changes: unknown[] = [];
+      fixture.componentInstance.productChange.subscribe((c) => changes.push(c));
+      el.querySelector('[aria-label="To buy"] [aria-label^="Tomatoes,"]')!.dispatchEvent(
+        new MouseEvent('contextmenu', { cancelable: true }),
+      );
+      await fixture.whenStable();
+      const field = el.querySelector<HTMLInputElement>('app-product-popup input[aria-label="Quantity"]')!;
+      field.value = '4';
+      field.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(changes).toEqual([{ id: '1', quantity: 4 }]);
+      expect(tiles(el, 'To buy')).toContain('4x Tomatoes');
+    });
   });
 
   it("shows each tile's category state as a dot and in its label", async () => {

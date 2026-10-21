@@ -2,10 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { ItemTile } from './item-tile';
 
 describe('ItemTile', () => {
-  function render(variant: 'tobuy' | 'bought' = 'tobuy') {
+  function render(variant: 'tobuy' | 'bought' = 'tobuy', quantity = 1) {
     const fixture = TestBed.createComponent(ItemTile);
     fixture.componentRef.setInput('name', 'Parmesan');
     fixture.componentRef.setInput('variant', variant);
+    fixture.componentRef.setInput('quantity', quantity);
     fixture.detectChanges();
     const events: string[] = [];
     fixture.componentInstance.press.subscribe(() => events.push('press'));
@@ -18,6 +19,19 @@ describe('ItemTile', () => {
 
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
+
+  it('shows a quantity above 1 before the name, on both variants', () => {
+    for (const variant of ['tobuy', 'bought'] as const) {
+      const { button } = render(variant, 2);
+      expect(button.querySelector('.label')!.textContent).toBe('2x Parmesan');
+      expect(button.getAttribute('aria-label')).toContain('2x Parmesan');
+    }
+  });
+
+  it('shows the name alone for quantity 1', () => {
+    const { button } = render('tobuy', 1);
+    expect(button.querySelector('.label')!.textContent).toBe('Parmesan');
+  });
 
   it('opens details on a long press and does not count the release as a tap', () => {
     const { button, pointer, events } = render('bought');

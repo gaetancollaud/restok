@@ -16,6 +16,7 @@ query Grocery {
   products {
     id
     name
+    quantity
     bought
     boughtAt
     classification
@@ -29,8 +30,8 @@ query Grocery {
   }
 }
 
-mutation AddProduct($name: String!) {
-  addProduct(name: $name) {
+mutation AddProduct($name: String!, $quantity: Int) {
+  addProduct(name: $name, quantity: $quantity) {
     id
   }
 }
@@ -39,6 +40,7 @@ mutation UpdateProduct($id: String!, $input: ProductUpdateInput!) {
   updateProduct(id: $id, input: $input) {
     id
     name
+    quantity
     bought
     boughtAt
     classification

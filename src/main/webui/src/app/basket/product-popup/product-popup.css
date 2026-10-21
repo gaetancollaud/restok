@@ -48,7 +48,21 @@
   font-family: var(--font-sans);
 }
 
-.name:focus-visible {
+.qty {
+  box-sizing: border-box;
+  width: 8ch;
+  min-height: var(--size-touch);
+  padding: 0 var(--space-2);
+  border: 2px solid var(--ink-muted);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 18px;
+}
+
+.name:focus-visible,
+.qty:focus-visible {
   outline: 3px solid var(--ink);
   outline-offset: 2px;
 }

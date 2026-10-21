@@ -1,4 +1,4 @@
-import { boughtList, hiddenFor, Item, nearestShop, orderFor } from './basket';
+import { boughtList, hiddenFor, Item, nearestShop, orderFor, parseQuantity } from './basket';
 
 describe('basket', () => {
   describe('nearestShop', () => {
@@ -71,6 +71,26 @@ describe('basket', () => {
 
     it('keeps every bought item in Bought', () => {
       expect(names(boughtList(restricted))).toEqual(['Coffee']);
+    });
+  });
+
+  describe('parseQuantity', () => {
+    it.each([
+      ['2 apples', 'apples', 2],
+      ['3x eggs', 'eggs', 3],
+      ['eggs x3', 'eggs', 3],
+      ['eggs 3', 'eggs', 3],
+      ['2X eggs', 'eggs', 2],
+      ['4× eggs', 'eggs', 4],
+      [' apples ', 'apples', 1],
+      ['500g butter', '500g butter', 1],
+      ['7', '7', 1],
+      ['0 apples', '0 apples', 1],
+      ['1000 apples', '1000 apples', 1],
+      ['2 apples 3', 'apples 3', 2],
+      ['coca 0 zero', 'coca 0 zero', 1],
+    ])('reads %j as %j × %d', (text, name, quantity) => {
+      expect(parseQuantity(text)).toEqual({ name, quantity });
     });
   });
 });

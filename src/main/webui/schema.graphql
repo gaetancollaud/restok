@@ -1,7 +1,7 @@
 "Mutation root"
 type Mutation {
   addCategory(name: String!): ProductCategory!
-  addProduct(name: String!): Product!
+  addProduct(name: String!, quantity: Int = 1): Product!
   addShop(latitude: Float, longitude: Float, name: String!): Shop!
   deleteCategory(id: String!): String!
   deleteProduct(id: String!): String!
@@ -20,6 +20,7 @@ type Product {
   classification: ProductClassification!
   id: String!
   name: String!
+  quantity: Int!
   shop: Shop
 }
 
@@ -67,5 +68,6 @@ input ProductUpdateInput {
   bought: Boolean
   categoryId: String
   name: String
+  quantity: Int
   shopId: String
 }

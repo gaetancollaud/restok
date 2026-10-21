@@ -8,6 +8,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.vertx.core.eventbus.EventBus;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.graphql.DefaultValue;
 import org.eclipse.microprofile.graphql.GraphQLApi;
 import org.eclipse.microprofile.graphql.GraphQLException;
 import org.eclipse.microprofile.graphql.Mutation;
@@ -46,13 +47,14 @@ public class ProductGraphQLApi {
     }
 
     @Mutation
-    public @NonNull Product addProduct(@NonNull String name) throws GraphQLException {
+    public @NonNull Product addProduct(@NonNull String name, @DefaultValue("1") Integer quantity) throws GraphQLException {
         String trimmed = name.strip();
         if (trimmed.isEmpty()) {
             throw new GraphQLException("name must not be blank");
         }
         Product product = new Product();
         product.name = trimmed;
+        product.quantity = quantity == null ? 1 : validQuantity(quantity);
         product.classification = ProductClassification.PENDING;
         // Explicit transaction (not @Transactional) so the event is sent after commit and the consumer sees the row
         QuarkusTransaction.requiringNew().run(() -> repository.persist(product));
@@ -66,6 +68,7 @@ public class ProductGraphQLApi {
         Product product = find(id);
         // Resolve every field before assigning any: a GraphQLException is checked, so it doesn't roll back
         String name = input.name == null ? null : validName(input.name, id);
+        Integer quantity = input.quantity == null ? null : validQuantity(input.quantity);
         ProductCategory category = input.categoryId == null || input.categoryId.isEmpty() ? null
                 : uuid(input.categoryId).flatMap(categoryRepository::findByIdOptional)
                 .orElseThrow(() -> new GraphQLException("category not found"));
@@ -75,6 +78,9 @@ public class ProductGraphQLApi {
 
         if (name != null) {
             product.name = name;
+        }
+        if (quantity != null) {
+            product.quantity = quantity;
         }
         if (input.bought != null && product.bought != input.bought) {
             product.bought = input.bought;
@@ -114,6 +120,13 @@ public class ProductGraphQLApi {
             throw new GraphQLException("product name already exists");
         }
         return trimmed;
+    }
+
+    private static int validQuantity(int quantity) throws GraphQLException {
+        if (quantity < 1) {
+            throw new GraphQLException("quantity must be at least 1");
+        }
+        return quantity;
     }
 
     /** Empty for a malformed id, so it is reported like an unknown one. */

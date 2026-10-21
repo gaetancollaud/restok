@@ -31,10 +31,11 @@ describe('Grocery', () => {
   afterEach(() => controller.verify());
 
   const category = (name: string) => ({ __typename: 'ProductCategory', id: name, name });
-  const product = (id: string, name: string, cat: string | null, classification = 'CLASSIFIED') => ({
+  const product = (id: string, name: string, cat: string | null, classification = 'CLASSIFIED', quantity = 1) => ({
     __typename: 'Product',
     id,
     name,
+    quantity,
     bought: false,
     boughtAt: null,
     classification,
@@ -217,18 +218,18 @@ describe('Grocery', () => {
     const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
     const input = el.querySelector<HTMLInputElement>('input')!;
-    input.value = 'pomme';
+    input.value = '2 pomme';
     input.dispatchEvent(new Event('input'));
     el.querySelector('form')!.dispatchEvent(new Event('submit'));
     const op = controller.expectOne(AddProductDocument);
-    expect(op.operation.variables).toEqual({ name: 'pomme' });
+    expect(op.operation.variables).toEqual({ name: 'pomme', quantity: 2 });
     op.flush({ data: { addProduct: { __typename: 'Product', id: '3' } } });
     controller.expectOne(GroceryDocument).flush({
-      data: { shops: [coop], categories, products: [apple, baguette, product('3', 'pomme', null, 'PENDING')] },
+      data: { shops: [coop], categories, products: [apple, baguette, product('3', 'pomme', null, 'PENDING', 2)] },
     });
     await fixture.whenStable();
-    expect(toBuy(el)).toEqual(['baguette', 'apple', 'pomme']);
-    expect(el.querySelector('[aria-label="pomme, sorting into a category, tap twice to mark as bought"] .dot.pending')).not.toBeNull();
+    expect(toBuy(el)).toEqual(['baguette', 'apple', '2x pomme']);
+    expect(el.querySelector('[aria-label="2x pomme, sorting into a category, tap twice to mark as bought"] .dot.pending')).not.toBeNull();
   });
 
   it('polls only while a product is pending', async () => {

@@ -131,6 +131,57 @@ describe('ProductPopup', () => {
     expect(names).toEqual([]);
   });
 
+  describe('quantity', () => {
+    async function renderQuantity(item: Item) {
+      const fixture = TestBed.createComponent(ProductPopup);
+      fixture.componentRef.setInput('item', item);
+      fixture.componentRef.setInput('shops', shops);
+      await fixture.whenStable();
+      const quantities: number[] = [];
+      fixture.componentInstance.quantityChange.subscribe((v) => quantities.push(v));
+      const names: string[] = [];
+      fixture.componentInstance.nameChange.subscribe((v) => names.push(v));
+      const el = fixture.nativeElement as HTMLElement;
+      const field = () => el.querySelector<HTMLInputElement>('input[aria-label="Quantity"]');
+      const type = (value: string) => {
+        field()!.value = value;
+        field()!.dispatchEvent(new Event('change'));
+      };
+      return { el, field, type, quantities, names };
+    }
+
+    it('shows the quantity, 1 when unset', async () => {
+      expect((await renderQuantity({ id: '1', name: 'apples', quantity: 3 })).field()!.value).toBe('3');
+      expect((await renderQuantity({ id: '1', name: 'apples' })).field()!.value).toBe('1');
+    });
+
+    it('emits a changed quantity, back to 1 included, and puts the saved one back', async () => {
+      const { field, type, quantities } = await renderQuantity({ id: '1', name: 'apples', quantity: 3 });
+      type('5');
+      expect(field()!.value).toBe('3');
+      type('1');
+      expect(quantities).toEqual([5, 1]);
+    });
+
+    it('emits nothing for 0, empty, a fraction or the same value', async () => {
+      const { field, type, quantities } = await renderQuantity({ id: '1', name: 'apples', quantity: 2 });
+      for (const value of ['0', '', '1.5', '2']) type(value);
+      expect(quantities).toEqual([]);
+      expect(field()!.value).toBe('2');
+    });
+
+    it('does not read a quantity from a new name', async () => {
+      const { el, quantities, names } = await renderQuantity({ id: '1', name: 'apples' });
+      typeName(el, '2 apples');
+      expect(names).toEqual(['2 apples']);
+      expect(quantities).toEqual([]);
+    });
+
+    it('has no quantity field before a new product is saved', async () => {
+      expect((await renderQuantity({ id: 'n1', name: 'apples' })).field()).toBeNull();
+    });
+  });
+
   describe('delete', () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());

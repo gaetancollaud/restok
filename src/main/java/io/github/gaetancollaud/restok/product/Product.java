@@ -27,6 +27,10 @@ public class Product {
     @Column(nullable = false, columnDefinition = "text")
     public String name;
 
+    /** How many to buy, at least 1. */
+    @Column(nullable = false)
+    public int quantity = 1;
+
     @Column(nullable = false)
     public boolean bought;
 

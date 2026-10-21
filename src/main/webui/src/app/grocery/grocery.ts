@@ -58,6 +58,7 @@ export class Grocery {
     (this.data()?.products ?? []).map((p) => ({
       id: p.id,
       name: p.name,
+      quantity: p.quantity,
       aisle: p.category?.name,
       categoryId: p.category?.id,
       status: p.classification,
@@ -118,7 +119,7 @@ export class Grocery {
     this.update(id, { categoryId: categoryId ?? '' });
   }
 
-  protected updateProduct({ id, ...input }: { id: string; name: string }): void {
+  protected updateProduct({ id, ...input }: { id: string } & ProductUpdateInput): void {
     this.update(id, input);
   }
 
@@ -131,10 +132,10 @@ export class Grocery {
     this.save(this.deleteProductGql.mutate({ variables: { id } }));
   }
 
-  protected add(name: string): void {
+  protected add({ name, quantity }: { name: string; quantity: number }): void {
     this.run(
       this.addGql.mutate({
-        variables: { name },
+        variables: { name, quantity },
         refetchQueries: ['Grocery'],
         awaitRefetchQueries: true,
       }),

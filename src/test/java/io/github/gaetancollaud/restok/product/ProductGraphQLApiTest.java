@@ -29,9 +29,10 @@ import static org.hamcrest.Matchers.nullValue;
 @QuarkusTest
 public class ProductGraphQLApiTest {
 
-    static final String FIELDS = "{ id name bought boughtAt classification category { name } shop { name } }";
+    static final String FIELDS = "{ id name quantity bought boughtAt classification category { name } shop { name } }";
     static final String LIST = "query($shopId: String) { products(shopId: $shopId) " + FIELDS + " }";
     static final String ADD = "mutation($name: String!) { addProduct(name: $name) " + FIELDS + " }";
+    static final String ADD_QUANTITY = "mutation($name: String!, $quantity: Int) { addProduct(name: $name, quantity: $quantity) " + FIELDS + " }";
     static final String UPDATE = "mutation($id: String!, $input: ProductUpdateInput!) { updateProduct(id: $id, input: $input) " + FIELDS + " }";
     static final String DELETE = "mutation($id: String!) { deleteProduct(id: $id) }";
 
@@ -85,6 +86,7 @@ public class ProductGraphQLApiTest {
                 .body("errors", nullValue())
                 .body("data.addProduct.id", notNullValue())
                 .body("data.addProduct.name", is("tomato"))
+                .body("data.addProduct.quantity", is(1))
                 .body("data.addProduct.bought", is(false))
                 .body("data.addProduct.category", nullValue())
                 .body("data.addProduct.shop", nullValue())
@@ -95,6 +97,43 @@ public class ProductGraphQLApiTest {
     void blankNameIsRejected() {
         post(ADD, Map.of("name", "  ")).body("errors[0].message", is("name must not be blank"));
         post(LIST, shop(null)).body("data.products", empty());
+    }
+
+    @Test
+    void addWithQuantity() {
+        post(ADD_QUANTITY, Map.of("name", "apple", "quantity", 3))
+                .body("errors", nullValue())
+                .body("data.addProduct.name", is("apple"))
+                .body("data.addProduct.quantity", is(3));
+        post(LIST, shop(null)).body("data.products[0].quantity", is(3));
+    }
+
+    @Test
+    void addDoesNotParseTheName() {
+        post(ADD, Map.of("name", "2 apples"))
+                .body("data.addProduct.name", is("2 apples"))
+                .body("data.addProduct.quantity", is(1));
+    }
+
+    @Test
+    void quantityBelowOneIsRejectedOnAdd() {
+        post(ADD_QUANTITY, Map.of("name", "apple", "quantity", 0)).body("errors[0].message", is("quantity must be at least 1"));
+        post(LIST, shop(null)).body("data.products", empty());
+    }
+
+    @Test
+    void quantityCanBeUpdated() {
+        String id = addProduct("apple");
+        update(id, Map.of("quantity", 4)).body("errors", nullValue()).body("data.updateProduct.quantity", is(4));
+        post(LIST, shop(null)).body("data.products[0].quantity", is(4)).body("data.products[0].name", is("apple"));
+    }
+
+    @Test
+    void quantityBelowOneIsRejectedOnUpdate() {
+        String id = addProduct("apple");
+        update(id, Map.of("quantity", 2));
+        update(id, Map.of("quantity", 0)).body("errors[0].message", is("quantity must be at least 1"));
+        post(LIST, shop(null)).body("data.products[0].quantity", is(2));
     }
 
     @Test
@@ -172,10 +211,11 @@ public class ProductGraphQLApiTest {
     void emptyInputChangesNothing() {
         String lidl = addShop("Lidl");
         String apple = addProduct("apple");
-        update(apple, Map.of("categoryId", categoryId("Fruits"), "shopId", lidl, "bought", true));
+        update(apple, Map.of("categoryId", categoryId("Fruits"), "shopId", lidl, "bought", true, "quantity", 2));
         update(apple, Map.of())
                 .body("errors", nullValue())
                 .body("data.updateProduct.name", is("apple"))
+                .body("data.updateProduct.quantity", is(2))
                 .body("data.updateProduct.bought", is(true))
                 .body("data.updateProduct.category.name", is("Fruits"))
                 .body("data.updateProduct.shop.name", is("Lidl"));
@@ -184,9 +224,10 @@ public class ProductGraphQLApiTest {
     @Test
     void oneInvalidFieldChangesNothing() {
         String apple = addProduct("apple");
-        update(apple, Map.of("bought", true, "name", "pomme", "shopId", UUID.randomUUID().toString()))
+        update(apple, Map.of("bought", true, "name", "pomme", "quantity", 5, "shopId", UUID.randomUUID().toString()))
                 .body("errors[0].message", is("shop not found"));
-        post(LIST, shop(null)).body("data.products[0].name", is("apple")).body("data.products[0].bought", is(false));
+        post(LIST, shop(null)).body("data.products[0].name", is("apple")).body("data.products[0].bought", is(false))
+                .body("data.products[0].quantity", is(1));
     }
 
     @Test

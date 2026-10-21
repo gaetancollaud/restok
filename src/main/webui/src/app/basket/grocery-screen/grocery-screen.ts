@@ -18,6 +18,7 @@ import {
   hiddenFor,
   Item,
   orderFor,
+  parseQuantity,
   Shop,
 } from '../basket';
 import { ItemGrid } from '../item-grid/item-grid';
@@ -53,14 +54,14 @@ export class GroceryScreen {
   readonly editShops = output<void>();
   /** An item marked bought (true) or put back on the list (false). */
   readonly boughtChange = output<{ id: string; bought: boolean }>();
-  /** A new item name; a name already in the list is revived instead. */
-  readonly added = output<string>();
+  /** A new item, its quantity read from the typed text; a name already in the list is revived instead. */
+  readonly added = output<{ name: string; quantity: number }>();
   /** An item restricted to a shop, or to any shop (null). */
   readonly shopChange = output<{ id: string; shopId: string | null }>();
   /** An item's category picked by hand, or cleared (null). */
   readonly categoryChange = output<{ id: string; categoryId: string | null }>();
-  /** An item's fields edited in its popup; only the name for now. */
-  readonly productChange = output<{ id: string; name: string }>();
+  /** An item's fields edited in its popup, or revived from the add bar; missing fields are unchanged. */
+  readonly productChange = output<{ id: string; name?: string; quantity?: number; bought?: boolean }>();
   /** An item deleted for good from its popup. */
   readonly productRemoved = output<string>();
 
@@ -128,21 +129,30 @@ export class GroceryScreen {
     this.boughtChange.emit({ id, bought });
   }
 
-  protected add(name: string): void {
+  protected setQuantity(id: string, quantity: number): void {
+    this.state.update((items) => items.map((x) => (x.id === id ? { ...x, quantity } : x)));
+    this.productChange.emit({ id, quantity });
+  }
+
+  /** The quantity is read from the typed text here only, never on rename. */
+  protected add(text: string): void {
+    const { name, quantity } = parseQuantity(text);
     const existing = this.state().find((x) => x.name.toLowerCase() === name.toLowerCase());
     if (existing) {
-      if (existing.bought) {
-        this.setBought(existing.id, false);
-      }
+      // Back on the list with the typed quantity, in one update
+      this.state.update((items) =>
+        items.map((x) => (x.id === existing.id ? { ...x, bought: false, boughtAt: undefined, quantity } : x)),
+      );
+      this.productChange.emit({ id: existing.id, bought: false, quantity });
       return;
     }
     const id = 'n' + Date.now();
     const classify = this.classify();
     this.state.update((items) => [
       ...items,
-      { id, name, status: classify ? 'PENDING' : 'UNCLASSIFIED' },
+      { id, name, quantity, status: classify ? 'PENDING' : 'UNCLASSIFIED' },
     ]);
-    this.added.emit(name);
+    this.added.emit({ name, quantity });
     if (classify) {
       const done = (aisle: string | null) =>
         this.state.update((items) =>

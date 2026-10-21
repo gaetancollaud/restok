@@ -13,8 +13,8 @@ const LONG_PRESS_MS = 500;
 })
 export class ItemTile {
   readonly name = input.required<string>();
-  /** Quantity such as "2 ×" or "500 g". Shown on To-buy tiles only. */
-  readonly meta = input<string>();
+  /** How many to buy; shown before the name when above 1. */
+  readonly quantity = input(1);
   /** "tobuy": tapping marks it bought. "bought": tapping adds it back to the list. */
   readonly variant = input<'tobuy' | 'bought'>('tobuy');
   /** Category state, shown as the dot in the top-right corner. No dot when unset. */
@@ -35,6 +35,7 @@ export class ItemTile {
   private swallowClick = false;
 
   protected readonly bought = computed(() => this.variant() === 'bought');
+  protected readonly label = computed(() => (this.quantity() > 1 ? `${this.quantity()}x ${this.name()}` : this.name()));
   /** The dot is never the only cue: the label names the state too. */
   private readonly state = computed(() => {
     switch (this.status()) {
@@ -114,7 +115,7 @@ export class ItemTile {
   protected readonly ariaLabel = computed(() => {
     const state = this.state() ? ', ' + this.state() : '';
     return this.bought()
-      ? `Add ${this.name()} again${state}`
-      : `${this.name()}${this.meta() ? ', ' + this.meta() : ''}${state}, tap twice to mark as bought`;
+      ? `Add ${this.label()} again${state}`
+      : `${this.label()}${state}, tap twice to mark as bought`;
   });
 }

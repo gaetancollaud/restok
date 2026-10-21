@@ -28,6 +28,8 @@ export class ProductPopup {
   readonly shopChange = output<string | null>();
   /** A new name, trimmed; never blank or unchanged. */
   readonly nameChange = output<string>();
+  /** A new quantity: a whole number of at least 1, never unchanged. */
+  readonly quantityChange = output<number>();
   /** Closed by the button, Escape or the backdrop. */
   readonly closed = output<void>();
   /** Delete confirmed with a second tap; the popup closes itself. */
@@ -67,6 +69,14 @@ export class ProductPopup {
     const name = field.value.trim();
     field.value = this.item().name;
     if (name && name !== this.item().name) this.nameChange.emit(name);
+  }
+
+  /** Like rename: emits a valid new quantity and puts the bound one back. */
+  protected requantify(field: HTMLInputElement): void {
+    const quantity = Number(field.value);
+    const saved = this.item().quantity ?? 1;
+    field.value = String(saved);
+    if (Number.isInteger(quantity) && quantity >= 1 && quantity !== saved) this.quantityChange.emit(quantity);
   }
 
   /** A click on the backdrop lands on the dialog itself, outside its content box. */
