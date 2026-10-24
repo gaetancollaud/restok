@@ -1,0 +1,68 @@
+/* Lets the button be the header's flex item; the dialog lives in the top layer */
+:host {
+  display: contents;
+}
+
+.drawer {
+  box-sizing: border-box;
+  width: min(300px, 85vw);
+  height: 100dvh;
+  max-height: none;
+  margin: 0 0 0 auto;
+  padding: var(--space-4);
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+.drawer[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.account {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.entry {
+  box-sizing: border-box;
+  min-height: var(--size-touch);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.entry:active,
+.entry[aria-current='page'] {
+  background: var(--surface-sunken);
+}
+
+.entry:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: -3px;
+}

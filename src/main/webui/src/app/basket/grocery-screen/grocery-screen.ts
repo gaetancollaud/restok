@@ -50,8 +50,6 @@ export class GroceryScreen {
    */
   readonly classify = input<(name: string) => Promise<string | null>>();
 
-  /** The edit button beside the dropdown: open the Shops panel. */
-  readonly editShops = output<void>();
   /** An item marked bought (true) or put back on the list (false). */
   readonly boughtChange = output<{ id: string; bought: boolean }>();
   /** A new item, its quantity read from the typed text; a name already in the list is revived instead. */
@@ -61,7 +59,12 @@ export class GroceryScreen {
   /** An item's category picked by hand, or cleared (null). */
   readonly categoryChange = output<{ id: string; categoryId: string | null }>();
   /** An item's fields edited in its popup, or revived from the add bar; missing fields are unchanged. */
-  readonly productChange = output<{ id: string; name?: string; quantity?: number; bought?: boolean }>();
+  readonly productChange = output<{
+    id: string;
+    name?: string;
+    quantity?: number;
+    bought?: boolean;
+  }>();
   /** An item deleted for good from its popup. */
   readonly productRemoved = output<string>();
 
@@ -70,7 +73,7 @@ export class GroceryScreen {
     this.shopId() === ALL_SHOPS ? undefined : findShop(this.shops(), this.shopId()),
   );
   protected readonly ALL_SHOPS = ALL_SHOPS;
-  /** Drives the Install / Update button beside the edit button. */
+  /** Drives the Install / Update button beside the menu button. */
   protected readonly pwa = inject(Pwa);
   // Local copy, reset whenever the parent passes new items
   private readonly state = linkedSignal(() => this.items());
@@ -141,7 +144,9 @@ export class GroceryScreen {
     if (existing) {
       // Back on the list with the typed quantity, in one update
       this.state.update((items) =>
-        items.map((x) => (x.id === existing.id ? { ...x, bought: false, boughtAt: undefined, quantity } : x)),
+        items.map((x) =>
+          x.id === existing.id ? { ...x, bought: false, boughtAt: undefined, quantity } : x,
+        ),
       );
       this.productChange.emit({ id: existing.id, bought: false, quantity });
       return;

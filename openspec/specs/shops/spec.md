@@ -92,7 +92,7 @@ Stored shops and their category orders SHALL survive an application restart.
 - **THEN** `shops` still returns the shop with the same order
 
 ### Requirement: Shops panel in the SPA
-An edit button beside the shop dropdown SHALL open a Shops panel listing the shops, where the user can select a shop, rename it, add a shop named "New shop" with a copy of the selected shop's order, and delete a shop with a second tap while more than one exists. A back button SHALL return to the list on the selected shop. Changes SHALL be saved without a separate save step.
+The menu's Shops entry SHALL open a Shops panel listing the shops, where the user can select a shop, rename it, add a shop named "New shop" with a copy of the selected shop's order, and delete a shop with a second tap while more than one exists. A back button, or the menu's Products entry, SHALL return to the list on the selected shop. Changes SHALL be saved without a separate save step.
 
 #### Scenario: Rename and go back
 - **WHEN** the user opens Shops, renames "Coop" to "Coop Pronto" and goes back

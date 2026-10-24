@@ -33,11 +33,11 @@ Production builds SHALL register a service worker that caches the app shell (HTM
 - **THEN** no service worker is registered
 
 ### Requirement: Install button
-The grocery screen header SHALL show an Install button next to the edit button while the browser offers an install prompt for the app. Tapping it SHALL open the browser's install prompt. The button SHALL disappear once the app is installed or the prompt has been used.
+The grocery screen header SHALL show an Install button next to the menu button while the browser offers an install prompt for the app. Tapping it SHALL open the browser's install prompt. The button SHALL disappear once the app is installed or the prompt has been used.
 
 #### Scenario: Not installed
 - **WHEN** the browser offers to install the app and no update is ready
-- **THEN** the header shows the Install button next to the edit button
+- **THEN** the header shows the Install button next to the menu button
 
 #### Scenario: Tap Install
 - **WHEN** the user taps the Install button

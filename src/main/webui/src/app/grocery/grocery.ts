@@ -19,11 +19,12 @@ import {
   UpdateProductGQL,
   UpdateShopGQL,
 } from '../graphql/generated';
+import { Menu, Page } from '../menu/menu';
 
 /** The app's only page: the list (GroceryScreen) and the Shops panel (ShopEditor), fed from GraphQL. */
 @Component({
   selector: 'app-grocery',
-  imports: [GroceryScreen, ShopEditor],
+  imports: [GroceryScreen, Menu, ShopEditor],
   templateUrl: './grocery.html',
   styleUrl: './grocery.css',
 })
@@ -69,7 +70,7 @@ export class Grocery {
   );
   protected readonly categories = computed(() => this.data()?.categories ?? []);
   protected readonly error = signal<string | null>(null);
-  protected readonly panel = signal<'list' | 'shops'>('list');
+  protected readonly panel = signal<Page>('list');
   /** Shared by both panels; opens on All shops, then the nearby shop if there is one. */
   protected readonly shopId = signal(ALL_SHOPS);
   /** The device position, asked once on open; stays unset when refused, unavailable or too slow. */
@@ -115,7 +116,13 @@ export class Grocery {
     this.update(id, { shopId: shopId ?? '' });
   }
 
-  protected setProductCategory({ id, categoryId }: { id: string; categoryId: string | null }): void {
+  protected setProductCategory({
+    id,
+    categoryId,
+  }: {
+    id: string;
+    categoryId: string | null;
+  }): void {
     this.update(id, { categoryId: categoryId ?? '' });
   }
 
@@ -177,7 +184,11 @@ export class Grocery {
   }
 
   protected renameCategory({ from, to }: { from: string; to: string }): void {
-    this.save(this.updateCategoryGql.mutate({ variables: { id: this.categoryId(from), input: { name: to } } }));
+    this.save(
+      this.updateCategoryGql.mutate({
+        variables: { id: this.categoryId(from), input: { name: to } },
+      }),
+    );
   }
 
   /** Deletes the category everywhere; its products become uncategorized. */
@@ -187,7 +198,9 @@ export class Grocery {
 
   /** Saves an order of category names. */
   private order(shopId: string, names: string[]): Observable<unknown> {
-    return this.orderGql.mutate({ variables: { shopId, categoryIds: names.map((n) => this.categoryId(n)) } });
+    return this.orderGql.mutate({
+      variables: { shopId, categoryIds: names.map((n) => this.categoryId(n)) },
+    });
   }
 
   private categoryId(name: string): string {

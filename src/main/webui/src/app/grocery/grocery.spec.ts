@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { OAuthService } from 'angular-oauth2-oidc';
 import { ApolloTestingController, ApolloTestingModule } from 'apollo-angular/testing';
 import {
   AddCategoryDocument,
@@ -24,7 +25,10 @@ describe('Grocery', () => {
 
   beforeEach(() => {
     geolocate(() => undefined);
-    TestBed.configureTestingModule({ imports: [Grocery, ApolloTestingModule] });
+    TestBed.configureTestingModule({
+      imports: [Grocery, ApolloTestingModule],
+      providers: [{ provide: OAuthService, useValue: { issuer: 'https://idp/realms/r', getIdentityClaims: () => null } }],
+    });
     controller = TestBed.inject(ApolloTestingController);
   });
 
@@ -262,9 +266,15 @@ describe('Grocery', () => {
       locateAt(46.5, 6.6);
       const fixture = await render();
       const el = fixture.nativeElement as HTMLElement;
-      el.querySelector<HTMLButtonElement>('[aria-label="Edit shops and aisle order"]')!.click();
-      await fixture.whenStable();
+      await choose(fixture, 'app-grocery-screen', 'Shops');
       return { fixture, el };
+    }
+    /** Opens the menu in a panel's header and picks an entry. */
+    async function choose(fixture: { nativeElement: HTMLElement; whenStable(): Promise<unknown> }, panel: string, entry: string) {
+      const el = fixture.nativeElement;
+      el.querySelector<HTMLButtonElement>(`${panel} button[aria-label="Menu"]`)!.click();
+      [...el.querySelectorAll<HTMLElement>(`${panel} .entry`)].find((e) => e.textContent!.trim() === entry)!.click();
+      await fixture.whenStable();
     }
     /** Mutation results reach the next step a tick later. */
     const tick = () => new Promise((r) => setTimeout(r));
@@ -273,13 +283,19 @@ describe('Grocery', () => {
       controller.expectOne(GroceryDocument).flush({ data: { shops, categories, products: [apple, baguette] } });
     };
 
-    it('opens from the list and goes back', async () => {
+    it('opens from the menu and goes back with the arrow or the menu', async () => {
       const { fixture, el } = await openShops();
       expect(el.querySelector('app-grocery-screen')!.hasAttribute('hidden')).toBe(true);
       expect(el.querySelector('app-shop-editor')!.hasAttribute('hidden')).toBe(false);
       el.querySelector<HTMLButtonElement>('[aria-label="Back to the list"]')!.click();
       await fixture.whenStable();
       expect(el.querySelector('app-shop-editor')!.hasAttribute('hidden')).toBe(true);
+
+      await choose(fixture, 'app-grocery-screen', 'Shops');
+      expect(el.querySelector('app-shop-editor')!.hasAttribute('hidden')).toBe(false);
+      await choose(fixture, 'app-shop-editor', 'Products');
+      expect(el.querySelector('app-shop-editor')!.hasAttribute('hidden')).toBe(true);
+      expect(el.querySelector('app-grocery-screen')!.hasAttribute('hidden')).toBe(false);
     });
 
     it('saves a reorder and the list follows it', async () => {

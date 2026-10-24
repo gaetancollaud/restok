@@ -9,14 +9,15 @@
   [categories]="categories()"
   [classify]="serverClassifies"
   [(shopId)]="shopId"
-  (editShops)="panel.set('shops')"
   (boughtChange)="setBought($event)"
   (added)="add($event)"
   (shopChange)="setProductShop($event)"
   (categoryChange)="setProductCategory($event)"
   (productChange)="updateProduct($event)"
   (productRemoved)="removeProduct($event)"
-/>
+>
+  <app-menu [current]="panel()" (go)="panel.set($event)" />
+</app-grocery-screen>
 <app-shop-editor
   [hidden]="panel() !== 'shops'"
   [shops]="shops()"
@@ -29,4 +30,6 @@
   (addCategory)="addCategory($event)"
   (renameCategory)="renameCategory($event)"
   (removeCategory)="removeCategory($event)"
-/>
+>
+  <app-menu [current]="panel()" (go)="panel.set($event)" />
+</app-shop-editor>

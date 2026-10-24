@@ -36,7 +36,7 @@ All environment-specific values come from environment variables (Dev Services co
 | `QUARKUS_DATASOURCE_JDBC_URL` | App database, e.g. `jdbc:postgresql://host:5432/restok` | — |
 | `QUARKUS_DATASOURCE_USERNAME` / `QUARKUS_DATASOURCE_PASSWORD` | Database credentials (password from a Secret) | — |
 | `QUARKUS_OIDC_AUTH_SERVER_URL` | OIDC realm URL, e.g. `https://keycloak.example.com/realms/home`. Required, also in dev (put it in `.env`). The SPA gets it from `/auth-config` | — |
-| `QUARKUS_OIDC_CLIENT_ID` | OIDC client: public, standard flow with PKCE, redirect URI and web origin = the app URL | `restok` |
+| `QUARKUS_OIDC_CLIENT_ID` | OIDC client: public, standard flow with PKCE, redirect URI and web origin = the app URL. It must allow the `offline_access` scope (Keycloak default), which keeps users logged in for the realm's "Offline Session Idle" / "Offline Session Max"; leave "Revoke Refresh Token" off. "Valid post logout redirect URIs" must include the app URL (`+` reuses the redirect URIs) for Logout | `restok` |
 | `OPENROUTER_API_KEY` | OpenRouter API key (Secret). App starts without it; AI calls then fail | `not-configured` |
 | `OPENROUTER_MODEL` | Model id, see https://openrouter.ai/models | `openrouter/auto` |
 | `OPENROUTER_TIMEOUT` | Request timeout | `60s` |

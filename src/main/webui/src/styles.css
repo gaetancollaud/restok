@@ -109,7 +109,7 @@ body {
   border-top: 1px solid var(--line);
 }
 
-/* Square icon button in a header: edit shops, back */
+/* Square icon button in a header: menu, back, install */
 .iconbtn {
   flex: none;
   box-sizing: border-box;
