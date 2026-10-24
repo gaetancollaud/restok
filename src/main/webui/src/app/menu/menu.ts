@@ -17,7 +17,8 @@ export class Menu {
   private readonly oauth = inject(OAuthService);
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
 
-  protected readonly user: string = this.oauth.getIdentityClaims()?.['preferred_username'] ?? 'Account';
+  protected readonly user: string =
+    this.oauth.getIdentityClaims()?.['preferred_username'] ?? 'Account';
   // ponytail: Keycloak's account console path; another provider needs its own URL
   protected readonly profileUrl = `${this.oauth.issuer}/account`;
 

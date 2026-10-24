@@ -1,10 +1,14 @@
+/* At least 3 tiles per row: on narrow screens the minimum shrinks to a third of the row */
 :host {
   display: grid;
   gap: var(--space-3);
-  grid-template-columns: repeat(auto-fill, minmax(var(--size-tile-min), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--size-tile-min), (100% - 2 * var(--space-3)) / 3), 1fr));
 }
 
 :host(.compact) {
   gap: var(--space-2);
-  grid-template-columns: repeat(auto-fill, minmax(var(--size-tile-bought-min), 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(min(var(--size-tile-bought-min), (100% - 2 * var(--space-2)) / 3), 1fr)
+  );
 }

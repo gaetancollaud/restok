@@ -1,5 +1,7 @@
 :host {
   display: block;
+  /* The label scales down with the tile on narrow screens */
+  container-type: inline-size;
 }
 
 .tile {
@@ -41,8 +43,8 @@
 }
 
 .label {
-  font-size: 20px;
-  line-height: 24px;
+  font-size: min(20px, 16cqi);
+  line-height: 1.2;
   font-weight: 700;
   overflow-wrap: anywhere;
 }

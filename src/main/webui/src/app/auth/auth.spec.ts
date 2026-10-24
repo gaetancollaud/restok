@@ -3,7 +3,9 @@ import { OAuthService } from 'angular-oauth2-oidc';
 import { login } from './auth';
 
 describe('login', () => {
-  const setup = (state: { valid?: boolean; refreshToken?: string; refresh?: Promise<unknown> } = {}) => {
+  const setup = (
+    state: { valid?: boolean; refreshToken?: string; refresh?: Promise<unknown> } = {},
+  ) => {
     const oauth = {
       configure: vi.fn(),
       setupAutomaticSilentRefresh: vi.fn(),
@@ -16,7 +18,11 @@ describe('login', () => {
     };
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({ json: async () => ({ issuer: 'https://idp/realms/r/', clientId: 'restok' }) }),
+      vi
+        .fn()
+        .mockResolvedValue({
+          json: async () => ({ issuer: 'https://idp/realms/r/', clientId: 'restok' }),
+        }),
     );
     TestBed.configureTestingModule({ providers: [{ provide: OAuthService, useValue: oauth }] });
     const result = TestBed.runInInjectionContext(login);
@@ -32,7 +38,10 @@ describe('login', () => {
     const { oauth, result } = setup({ valid: true });
     await result;
     expect(oauth.configure).toHaveBeenCalledWith(
-      expect.objectContaining({ scope: expect.stringContaining('offline_access'), issuer: 'https://idp/realms/r' }),
+      expect.objectContaining({
+        scope: expect.stringContaining('offline_access'),
+        issuer: 'https://idp/realms/r',
+      }),
     );
   });
 
@@ -51,7 +60,10 @@ describe('login', () => {
   });
 
   it('drops the tokens and logs in again when the refresh is rejected', async () => {
-    const { oauth, flush, settled } = setup({ refreshToken: 'rt', refresh: Promise.reject(new Error('invalid_grant')) });
+    const { oauth, flush, settled } = setup({
+      refreshToken: 'rt',
+      refresh: Promise.reject(new Error('invalid_grant')),
+    });
     await flush();
     expect(oauth.logOut).toHaveBeenCalledWith(true);
     expect(oauth.initCodeFlow).toHaveBeenCalledOnce();
