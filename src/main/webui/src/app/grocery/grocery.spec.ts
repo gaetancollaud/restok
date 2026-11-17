@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { ApolloTestingController, ApolloTestingModule } from 'apollo-angular/testing';
 import {
@@ -17,8 +18,13 @@ describe('Grocery', () => {
   let controller: ApolloTestingController;
 
   /** Stubs the device position; the default never answers, like a pending permission prompt. */
-  const geolocate = (getCurrentPosition: (ok: PositionCallback, fail: PositionErrorCallback) => void) =>
-    Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition } });
+  const geolocate = (
+    getCurrentPosition: (ok: PositionCallback, fail: PositionErrorCallback) => void,
+  ) =>
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
   const locateAt = (latitude: number, longitude: number) =>
     geolocate((ok) => ok({ coords: { latitude, longitude } } as GeolocationPosition));
 
@@ -31,7 +37,12 @@ describe('Grocery', () => {
   afterEach(() => controller.verify());
 
   const category = (name: string) => ({ __typename: 'ProductCategory', id: name, name });
-  const product = (id: string, name: string, cat: string | null, classification = 'CLASSIFIED') => ({
+  const product = (
+    id: string,
+    name: string,
+    cat: string | null,
+    classification = 'CLASSIFIED',
+  ) => ({
     __typename: 'Product',
     id,
     name,
@@ -63,7 +74,8 @@ describe('Grocery', () => {
 
   const toBuy = (el: HTMLElement) =>
     Array.from(el.querySelectorAll('[aria-label="To buy"] .label')).map((l) => l.textContent);
-  const shopSelect = (el: HTMLElement) => el.querySelector<HTMLSelectElement>('app-shop-select select')!;
+  const shopSelect = (el: HTMLElement) =>
+    el.querySelector<HTMLSelectElement>('app-shop-select select')!;
 
   it("sorts To buy in the shop's category order", async () => {
     locateAt(46.5, 6.6);
@@ -116,14 +128,21 @@ describe('Grocery', () => {
   it('marks a tapped product bought', async () => {
     const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
-    const tile = el.querySelector<HTMLButtonElement>('[aria-label="apple, Fruits, tap twice to mark as bought"]')!;
+    const tile = el.querySelector<HTMLButtonElement>(
+      '[aria-label="apple, Fruits, tap twice to mark as bought"]',
+    )!;
     tile.click();
     tile.click();
     const op = controller.expectOne(SetProductBoughtDocument);
     expect(op.operation.variables).toEqual({ id: '1', bought: true });
     op.flush({
       data: {
-        setProductBought: { __typename: 'Product', id: '1', bought: true, boughtAt: '2026-10-17T10:00:00Z' },
+        setProductBought: {
+          __typename: 'Product',
+          id: '1',
+          bought: true,
+          boughtAt: '2026-10-17T10:00:00Z',
+        },
       },
     });
     await fixture.whenStable();
@@ -132,17 +151,29 @@ describe('Grocery', () => {
   });
 
   it('restricts a product to a shop from its popup, and back to any shop', async () => {
-    const lidl = { ...coop, id: 'lidl', name: 'Lidl', latitude: null, longitude: null, categoryOrder: [] };
+    const lidl = {
+      ...coop,
+      id: 'lidl',
+      name: 'Lidl',
+      latitude: null,
+      longitude: null,
+      categoryOrder: [],
+    };
     locateAt(46.5, 6.6);
     const fixture = TestBed.createComponent(Grocery);
     fixture.detectChanges();
-    controller.expectOne(GroceryDocument).flush({ data: { shops: [coop, lidl], categories, products: [apple, baguette] } });
+    controller
+      .expectOne(GroceryDocument)
+      .flush({ data: { shops: [coop, lidl], categories, products: [apple, baguette] } });
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
-    el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!
-      .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+    el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!.dispatchEvent(
+      new MouseEvent('contextmenu', { cancelable: true }),
+    );
     await fixture.whenStable();
-    const select = el.querySelector<HTMLSelectElement>('app-product-popup select[aria-label="Buy only at"]')!;
+    const select = el.querySelector<HTMLSelectElement>(
+      'app-product-popup select[aria-label="Buy only at"]',
+    )!;
     const pick = async (value: string, shop: unknown) => {
       select.value = value;
       select.dispatchEvent(new Event('change'));
@@ -164,26 +195,37 @@ describe('Grocery', () => {
     locateAt(46.5, 6.6);
     const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
-    el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!
-      .dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+    el.querySelector('[aria-label="apple, Fruits, tap twice to mark as bought"]')!.dispatchEvent(
+      new MouseEvent('contextmenu', { cancelable: true }),
+    );
     await fixture.whenStable();
-    const select = el.querySelector<HTMLSelectElement>('app-product-popup select[aria-label="Category"]')!;
+    const select = el.querySelector<HTMLSelectElement>(
+      'app-product-popup select[aria-label="Category"]',
+    )!;
     expect(select.value).toBe('Fruits');
     const pick = async (value: string, cat: unknown, classification: string) => {
       select.value = value;
       select.dispatchEvent(new Event('change'));
       const op = controller.expectOne(SetProductCategoryDocument);
       expect(op.operation.variables).toEqual({ id: '1', categoryId: value || null });
-      op.flush({ data: { setProductCategory: { __typename: 'Product', id: '1', classification, category: cat } } });
+      op.flush({
+        data: {
+          setProductCategory: { __typename: 'Product', id: '1', classification, category: cat },
+        },
+      });
       await fixture.whenStable();
     };
 
     await pick('Pain', category('Pain'), 'CLASSIFIED');
-    expect(el.querySelector('[aria-label="apple, Pain, tap twice to mark as bought"]')).not.toBeNull();
+    expect(
+      el.querySelector('[aria-label="apple, Pain, tap twice to mark as bought"]'),
+    ).not.toBeNull();
 
     await pick('', null, 'UNCLASSIFIED');
     expect(toBuy(el)).toEqual(['baguette', 'apple']);
-    expect(el.querySelector('[aria-label="apple, no category, tap twice to mark as bought"]')).not.toBeNull();
+    expect(
+      el.querySelector('[aria-label="apple, no category, tap twice to mark as bought"]'),
+    ).not.toBeNull();
   });
 
   it('adds a new product and refetches', async () => {
@@ -198,11 +240,19 @@ describe('Grocery', () => {
     expect(op.operation.variables).toEqual({ name: 'pomme' });
     op.flush({ data: { addProduct: { __typename: 'Product', id: '3' } } });
     controller.expectOne(GroceryDocument).flush({
-      data: { shops: [coop], categories, products: [apple, baguette, product('3', 'pomme', null, 'PENDING')] },
+      data: {
+        shops: [coop],
+        categories,
+        products: [apple, baguette, product('3', 'pomme', null, 'PENDING')],
+      },
     });
     await fixture.whenStable();
     expect(toBuy(el)).toEqual(['baguette', 'apple', 'pomme']);
-    expect(el.querySelector('[aria-label="pomme, sorting into a category, tap twice to mark as bought"] .dot.pending')).not.toBeNull();
+    expect(
+      el.querySelector(
+        '[aria-label="pomme, sorting into a category, tap twice to mark as bought"] .dot.pending',
+      ),
+    ).not.toBeNull();
   });
 
   it('polls only while a product is pending', async () => {
@@ -217,7 +267,9 @@ describe('Grocery', () => {
     fixture.detectChanges();
     controller
       .expectOne(GroceryDocument)
-      .flush({ data: { shops: [coop], categories, products: [product('3', 'pomme', null, 'PENDING')] } });
+      .flush({
+        data: { shops: [coop], categories, products: [product('3', 'pomme', null, 'PENDING')] },
+      });
     await fixture.whenStable();
     expect(start).toHaveBeenCalledWith(2000);
 
@@ -228,6 +280,110 @@ describe('Grocery', () => {
       .flush({ data: { shops: [coop], categories, products: [product('3', 'pomme', 'Fruits')] } });
     await fixture.whenStable();
     expect(stop).toHaveBeenCalled();
+  });
+
+  // TestBed provides a mock browser location, so the URL is read and moved through Location
+  describe('URL', () => {
+    const lidl = { ...coop, id: 'lidl', name: 'Lidl', latitude: null, longitude: null };
+    const url = () => TestBed.inject(Location);
+    /** Opens the app at this path, with Coop and Lidl. */
+    async function open(path: string) {
+      url().replaceState(path);
+      const fixture = await render([apple, baguette], [coop, lidl]);
+      return { fixture, el: fixture.nativeElement as HTMLElement };
+    }
+    const shopsHidden = (el: HTMLElement) =>
+      el.querySelector('app-shop-editor')!.hasAttribute('hidden');
+    const pressedChip = (el: HTMLElement) =>
+      el.querySelector('.chip[aria-pressed="true"]')!.textContent!.trim();
+    const chip = (el: HTMLElement, name: string) =>
+      Array.from(el.querySelectorAll<HTMLButtonElement>('.chip')).find(
+        (b) => b.textContent!.trim() === name,
+      )!;
+    const editShops = (el: HTMLElement) =>
+      el.querySelector<HTMLButtonElement>('[aria-label="Edit shops and aisle order"]')!.click();
+
+    it('opens the Shops panel on the shop in the URL', async () => {
+      const { el } = await open('/shop/lidl');
+      expect(shopsHidden(el)).toBe(false);
+      expect(pressedChip(el)).toBe('Lidl');
+      expect(url().path()).toBe('/shop/lidl');
+    });
+
+    it('follows the shop picked in the list, and the Shops panel', async () => {
+      const { fixture, el } = await open('/');
+      shopSelect(el).value = 'lidl';
+      shopSelect(el).dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(url().path()).toBe('/list/lidl');
+      shopSelect(el).value = '';
+      shopSelect(el).dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(url().path()).toBe('');
+      editShops(el);
+      await fixture.whenStable();
+      expect(url().path()).toBe('/shop/coop');
+    });
+
+    it('corrects an unknown shop to the first one', async () => {
+      const { el } = await open('/shop/gone');
+      expect(pressedChip(el)).toBe('Coop');
+      expect(url().path()).toBe('/shop/coop');
+    });
+
+    it('goes back to the list on the shop picked in the Shops panel, past no shop switches', async () => {
+      const { fixture, el } = await open('/list/coop');
+      editShops(el);
+      await fixture.whenStable();
+      chip(el, 'Lidl').click();
+      await fixture.whenStable();
+      expect(url().path()).toBe('/shop/lidl');
+      url().back();
+      await fixture.whenStable();
+      expect(shopsHidden(el)).toBe(true);
+      expect(shopSelect(el).value).toBe('lidl');
+      expect(url().path()).toBe('/list/lidl');
+    });
+
+    it('forward reopens the Shops panel', async () => {
+      const { fixture, el } = await open('/');
+      editShops(el);
+      await fixture.whenStable();
+      url().back();
+      await fixture.whenStable();
+      url().forward();
+      await fixture.whenStable();
+      expect(shopsHidden(el)).toBe(false);
+      expect(url().path()).toBe('/shop/coop');
+    });
+
+    it("the back button pops the Shops panel's entry", async () => {
+      const { fixture, el } = await open('/');
+      editShops(el);
+      await fixture.whenStable();
+      el.querySelector<HTMLButtonElement>('[aria-label="Back to the list"]')!.click();
+      await fixture.whenStable();
+      expect(shopsHidden(el)).toBe(true);
+      expect(url().path()).toBe('');
+      // Popped, not pushed: Forward still has the Shops panel's entry
+      url().forward();
+      await fixture.whenStable();
+      expect(shopsHidden(el)).toBe(false);
+    });
+
+    it('the back button leads to the list when the app opened on the Shops panel', async () => {
+      const { fixture, el } = await open('/shop/lidl');
+      el.querySelector<HTMLButtonElement>('[aria-label="Back to the list"]')!.click();
+      await fixture.whenStable();
+      expect(shopsHidden(el)).toBe(true);
+      expect(url().path()).toBe('/list/lidl');
+    });
+
+    it('keeps the shop in the URL over the nearby one', async () => {
+      locateAt(46.5, 6.6);
+      const { el } = await open('/list/lidl');
+      expect(shopSelect(el).value).toBe('lidl');
+    });
   });
 
   describe('Shops panel', () => {
@@ -243,7 +399,9 @@ describe('Grocery', () => {
     const tick = () => new Promise((r) => setTimeout(r));
     const refetch = async (shops: unknown[]) => {
       await tick();
-      controller.expectOne(GroceryDocument).flush({ data: { shops, categories, products: [apple, baguette] } });
+      controller
+        .expectOne(GroceryDocument)
+        .flush({ data: { shops, categories, products: [apple, baguette] } });
     };
 
     it('opens from the list and goes back', async () => {
@@ -257,7 +415,9 @@ describe('Grocery', () => {
 
     it('saves a reorder and the list follows it', async () => {
       const { fixture, el } = await openShops();
-      el.querySelector('[aria-label^="Move Fruits,"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+      el.querySelector('[aria-label^="Move Fruits,"]')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp' }),
+      );
       const op = controller.expectOne(SetShopCategoryOrderDocument);
       expect(op.operation.variables).toEqual({ shopId: 'coop', categoryIds: ['Fruits', 'Pain'] });
       op.flush({ data: { setShopCategoryOrder: { __typename: 'Shop', id: 'coop' } } });
@@ -277,7 +437,10 @@ describe('Grocery', () => {
       add.flush({ data: { addCategory: { __typename: 'ProductCategory', id: 'epices' } } });
       await tick();
       const order = controller.expectOne(SetShopCategoryOrderDocument);
-      expect(order.operation.variables).toEqual({ shopId: 'coop', categoryIds: ['Pain', 'Fruits', 'epices'] });
+      expect(order.operation.variables).toEqual({
+        shopId: 'coop',
+        categoryIds: ['Pain', 'Fruits', 'epices'],
+      });
       order.flush({ data: { setShopCategoryOrder: { __typename: 'Shop', id: 'coop' } } });
       await refetch([coop]);
       await fixture.whenStable();
@@ -290,7 +453,12 @@ describe('Grocery', () => {
       name.dispatchEvent(new Event('input'));
       name.dispatchEvent(new Event('change'));
       const op = controller.expectOne(UpdateShopDocument);
-      expect(op.operation.variables).toEqual({ id: 'coop', name: 'Coop Pronto', latitude: 46.5, longitude: 6.6 });
+      expect(op.operation.variables).toEqual({
+        id: 'coop',
+        name: 'Coop Pronto',
+        latitude: 46.5,
+        longitude: 6.6,
+      });
       op.flush({ data: { updateShop: { __typename: 'Shop', id: 'coop' } } });
       await refetch([{ ...coop, name: 'Coop Pronto' }]);
       await fixture.whenStable();
@@ -298,7 +466,9 @@ describe('Grocery', () => {
 
     it('adds a shop with a copy of the order and selects it', async () => {
       const { fixture, el } = await openShops();
-      Array.from(el.querySelectorAll<HTMLButtonElement>('.chip')).find((b) => b.textContent!.includes('New shop'))!.click();
+      Array.from(el.querySelectorAll<HTMLButtonElement>('.chip'))
+        .find((b) => b.textContent!.includes('New shop'))!
+        .click();
       const add = controller.expectOne(AddShopDocument);
       expect(add.operation.variables).toEqual({ name: 'New shop' });
       add.flush({ data: { addShop: { __typename: 'Shop', id: 'new' } } });

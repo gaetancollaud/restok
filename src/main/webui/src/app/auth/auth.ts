@@ -14,6 +14,7 @@ export async function login(): Promise<void> {
     redirectUri: location.origin + '/',
     responseType: 'code',
     scope: 'openid profile email',
+    preserveRequestedRoute: true, // back on the deep link after login; the redirect URI stays the root
   });
   oauth.setupAutomaticSilentRefresh(); // uses the refresh token
   if (!(await oauth.loadDiscoveryDocumentAndLogin())) {

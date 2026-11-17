@@ -20,7 +20,7 @@
   [hidden]="panel() !== 'shops'"
   [shops]="shops()"
   [(shopId)]="shopId"
-  (back)="panel.set('list')"
+  (back)="closeShops()"
   (addShop)="addShop($event)"
   (rename)="rename($event)"
   (remove)="removeShop($event)"

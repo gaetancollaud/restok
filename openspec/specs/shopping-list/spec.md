@@ -185,7 +185,7 @@ The To-buy grid SHALL leave out products restricted to a shop other than the sel
 - **THEN** "parmesan" is shown in Bought
 
 ### Requirement: All shops view
-The grocery screen's shop dropdown SHALL offer "All shops" as its first option. With it selected, To buy SHALL show every product still to buy, whatever its shop, sorted by name, with no "more for other shops" line. The screen SHALL open on "All shops".
+The grocery screen's shop dropdown SHALL offer "All shops" as its first option. With it selected, To buy SHALL show every product still to buy, whatever its shop, sorted by name, with no "more for other shops" line. The screen SHALL open on "All shops" unless the URL names a shop.
 
 #### Scenario: See everything
 - **WHEN** "parmesan" is restricted to "Lidl", "apple" has no shop, and the user selects "All shops"
@@ -196,11 +196,15 @@ The grocery screen's shop dropdown SHALL offer "All shops" as its first option. 
 - **THEN** "parmesan" is hidden again and the screen reads "1 more for other shops"
 
 #### Scenario: Opens on All shops
-- **WHEN** shops "Coop" and "Lidl" exist and the user opens the app away from every shop
+- **WHEN** shops "Coop" and "Lidl" exist and the user opens the app at `/` away from every shop
 - **THEN** the dropdown shows "All shops" and To buy shows every product still to buy
 
+#### Scenario: Opens on the shop in the URL
+- **WHEN** the user opens `/list/{id}` with the id of "Lidl"
+- **THEN** the dropdown shows "Lidl"
+
 ### Requirement: Nearby shop selected on open
-When the app opens, the SPA SHALL ask the device for its position once. If one or more shops with a location are within 200 m of it, the grocery screen SHALL select the nearest of them. Without a position (permission denied, unavailable, or no answer within 10 s), or with no shop within 200 m, the screen SHALL stay on "All shops" and show no error. Shops without a location SHALL be ignored.
+When the app opens at `/`, the SPA SHALL ask the device for its position once. If one or more shops with a location are within 200 m of it, the grocery screen SHALL select the nearest of them. Without a position (permission denied, unavailable, or no answer within 10 s), or with no shop within 200 m, the screen SHALL stay on "All shops" and show no error. Shops without a location SHALL be ignored. When the app opens on a URL that names a shop, that shop SHALL be kept and the position SHALL NOT change the selection.
 
 #### Scenario: In a shop
 - **WHEN** "Coop" is 50 m from the device and the user opens the app
@@ -217,6 +221,10 @@ When the app opens, the SPA SHALL ask the device for its position once. If one o
 #### Scenario: Location refused
 - **WHEN** the user denies the location permission
 - **THEN** the dropdown stays on "All shops" and no error is shown
+
+#### Scenario: URL names a shop
+- **WHEN** the user opens `/list/{id}` with the id of "Lidl" while "Coop" is 50 m away
+- **THEN** the dropdown keeps "Lidl"
 
 ### Requirement: Hand-picked shop wins over the position
 A shop chosen by hand in the dropdown or the Shops panel before the position arrives SHALL be kept; the position SHALL NOT change the selection afterwards.

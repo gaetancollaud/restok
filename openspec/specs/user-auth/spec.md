@@ -25,7 +25,7 @@ The backend SHALL serve `GET /auth-config` without authentication, returning JSO
 - **THEN** the response is 200 with JSON containing `issuer` and `clientId`
 
 ### Requirement: Login before the app renders
-On startup the SPA SHALL read `/auth-config` and, without a valid token, redirect to the provider's login using the authorization code flow with PKCE as a public client (no secret). After login it SHALL return to the app and render it. It SHALL NOT render without a token.
+On startup the SPA SHALL read `/auth-config` and, without a valid token, redirect to the provider's login using the authorization code flow with PKCE as a public client (no secret). After login it SHALL return to the app on the path the user first opened and render it. It SHALL NOT render without a token. The provider's redirect URI SHALL stay the app's root URL.
 
 #### Scenario: First visit
 - **WHEN** a user without a session opens the app
@@ -34,6 +34,10 @@ On startup the SPA SHALL read `/auth-config` and, without a valid token, redirec
 #### Scenario: Return from login
 - **WHEN** the provider redirects back to the app with an authorization code
 - **THEN** the SPA exchanges it for tokens, removes the code from the URL, and shows the shopping list
+
+#### Scenario: Deep link through login
+- **WHEN** a user without a session opens `/shop/{id}` and logs in
+- **THEN** the app opens on `/shop/{id}` with the Shops panel on that shop
 
 ### Requirement: Token sent and kept fresh
 The SPA SHALL send the access token as `Authorization: Bearer <token>` on every request to `/graphql` and SHALL renew it before it expires while the app is open, without user interaction.

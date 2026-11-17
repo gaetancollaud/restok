@@ -1,7 +1,8 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Location } from '@angular/common';
+import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
-import { ALL_SHOPS, Item, nearestShop, Shop } from '../basket/basket';
+import { ALL_SHOPS, findShop, Item, nearestShop, Shop } from '../basket/basket';
 import { GroceryScreen } from '../basket/grocery-screen/grocery-screen';
 import { ShopEditor } from '../basket/shop-editor/shop-editor';
 import {
@@ -18,6 +19,16 @@ import {
   SetShopCategoryOrderGQL,
   UpdateShopGQL,
 } from '../graphql/generated';
+
+type Panel = 'list' | 'shops';
+
+/** `/shop/{id}` is the Shops panel, `/list/{id}` the list on that shop; any other path is the list on All shops. */
+function parsePath(path: string): { panel: Panel; shopId?: string } {
+  const match = /^\/(list|shop)\/([^/?#]+)/.exec(path);
+  return match
+    ? { panel: match[1] === 'shop' ? 'shops' : 'list', shopId: decodeURIComponent(match[2]) }
+    : { panel: 'list' };
+}
 
 /** The app's only page: the list (GroceryScreen) and the Shops panel (ShopEditor), fed from GraphQL. */
 @Component({
@@ -67,14 +78,26 @@ export class Grocery {
   );
   protected readonly categories = computed(() => this.data()?.categories ?? []);
   protected readonly error = signal<string | null>(null);
-  protected readonly panel = signal<'list' | 'shops'>('list');
-  /** Shared by both panels; opens on All shops, then the nearby shop if there is one. */
-  protected readonly shopId = signal(ALL_SHOPS);
+  private readonly location = inject(Location);
+  private readonly opened = parsePath(this.location.path());
+  protected readonly panel = signal<Panel>(this.opened.panel);
+  /** Shared by both panels; opens on the URL's shop, else on All shops, then the nearby shop if there is one. */
+  protected readonly shopId = signal(this.opened.shopId ?? ALL_SHOPS);
   /** The device position, asked once on open; stays unset when refused, unavailable or too slow. */
   private readonly position = signal<GeolocationCoordinates | undefined>(undefined);
   private nearbyChecked = false;
+  /** Set while the Shops panel sits on a history entry this page pushed, so its back button can pop it. */
+  private pushedShops = false;
 
   constructor() {
+    // Back/Forward. Going back to the list keeps the shop picked in the Shops panel; the URL then follows it
+    const popstate = this.location.subscribe(({ url }) => {
+      const page = parsePath(url ?? '');
+      this.panel.set(page.panel);
+      if (page.panel === 'shops') this.shopId.set(page.shopId!);
+      else this.pushedShops = false;
+    });
+    inject(DestroyRef).onDestroy(() => popstate.unsubscribe());
     navigator.geolocation?.getCurrentPosition(
       (p) => this.position.set(p.coords),
       () => undefined,
@@ -90,6 +113,35 @@ export class Grocery {
     const shop = nearestShop(this.shops(), position.latitude, position.longitude);
     if (shop && untracked(this.shopId) === ALL_SHOPS) this.shopId.set(shop.id);
   });
+
+  /**
+   * The URL mirrors the panel and the shop shown, with gone ids corrected to the first shop once the shops load.
+   * Opening the Shops panel adds a history entry so Back closes it; everything else replaces the entry.
+   */
+  private readonly syncUrl = effect(() => {
+    if (!this.data()) return;
+    const shops = this.panel() === 'shops';
+    const id =
+      shops || this.shopId() !== ALL_SHOPS ? findShop(this.shops(), this.shopId())?.id : undefined;
+    const path = id
+      ? `/${shops ? 'shop' : 'list'}/${encodeURIComponent(id)}`
+      : shops
+        ? '/shop'
+        : '/';
+    if (this.location.isCurrentPathEqualTo(path)) return;
+    if (shops && parsePath(this.location.path()).panel === 'list') {
+      this.location.go(path);
+      this.pushedShops = true;
+    } else {
+      this.location.replaceState(path);
+    }
+  });
+
+  /** The Shops panel's back button: pop the entry it opened with, so Back and this button don't stack. */
+  protected closeShops(): void {
+    if (this.pushedShops) this.location.back();
+    else this.panel.set('list');
+  }
 
   /**
    * Classification runs on the server and arrives with the polled data, so this never settles:
